@@ -118,7 +118,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/users/:id", async (req, res) => {
     try {
       const updates = req.body;
-      delete updates.password; // Handle password separately
+      
+      // If password is being updated, keep it in updates
+      // The storage layer should handle password hashing if needed
       
       const updatedUser = await storage.updateUser(req.params.id, updates);
       if (!updatedUser) {
