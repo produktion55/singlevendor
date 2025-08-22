@@ -106,7 +106,7 @@ export function Checkout() {
           userId: user.id,
           productId: actualProductId,
           quantity: item.quantity,
-          totalAmount: (item.price * item.quantity).toString(),
+          totalAmount: item.price * item.quantity,
           status: orderStatus
         });
 
@@ -122,7 +122,7 @@ export function Checkout() {
         await createTransactionMutation.mutateAsync({
           userId: user.id,
           type: "purchase",
-          amount: `-${(item.price * item.quantity).toFixed(2)}`,
+          amount: -(item.price * item.quantity),
           currency: "EUR",
           description: `Purchase: ${item.title} (x${item.quantity})`
         });

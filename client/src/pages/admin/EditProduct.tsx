@@ -634,10 +634,10 @@ export function EditProduct({ productId }: { productId: string }) {
           </Link>
           <Button 
             type="submit" 
-            disabled={updateProductMutation.isPending}
+            disabled={updateProductMutation.isPending || false}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {updateProductMutation.isPending ? "Updating..." : "Update Product"}
+            {(updateProductMutation.isPending || false) ? "Updating..." : "Update Product"}
           </Button>
         </div>
       </form>

@@ -118,6 +118,10 @@
   .font-mono {
     font-family: var(--font-mono);
   }
+  
+  button {
+    @apply active:scale-[0.98] active:shadow-sm transition-all duration-75;
+  }
 }
 
 @layer utilities {

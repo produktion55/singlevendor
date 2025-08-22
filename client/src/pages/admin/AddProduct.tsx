@@ -421,10 +421,10 @@ export function AddProduct() {
           </Link>
           <Button 
             type="submit" 
-            disabled={createProductMutation.isPending}
+            disabled={createProductMutation.isPending || false}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {createProductMutation.isPending ? "Creating..." : "Create Product"}
+            {(createProductMutation.isPending || false) ? "Creating..." : "Create Product"}
           </Button>
         </div>
       </form>

@@ -75,12 +75,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      res.json({ 
+      // Convert empty strings to null for consistency
+      const response = { 
         id: user.id, 
         username: user.username, 
         role: user.role,
-        balance: user.balance 
-      });
+        balance: user.balance,
+        email: user.email || null,
+        publicName: user.publicName || null,
+        telegramUsername: user.telegramUsername || null,
+        threemaUsername: user.threemaUsername || null,
+        signalUsername: user.signalUsername || null,
+        sessionUsername: user.sessionUsername || null,
+        totpEnabled: user.totpEnabled
+      };
+      
+      console.log("Returning user data:", response);
+      res.json(response);
     } catch (error) {
       console.error("Get current user error:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -387,11 +398,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transaction = await storage.createTransaction(validatedData);
       
       // For purchase transactions, deduct from user balance
-      if (validatedData.type === "purchase" && validatedData.amount.startsWith("-")) {
+      if (validatedData.type === "purchase" && validatedData.amount < 0) {
         const user = await storage.getUser(validatedData.userId);
         if (user && user.balance) {
           const currentBalance = parseFloat(user.balance);
-          const transactionAmount = Math.abs(parseFloat(validatedData.amount));
+          const transactionAmount = Math.abs(validatedData.amount);
           const newBalance = Math.max(0, currentBalance - transactionAmount);
           
           await storage.updateUser(validatedData.userId, {

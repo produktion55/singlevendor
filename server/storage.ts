@@ -21,6 +21,7 @@ export interface IStorage {
   // Products
   getProduct(id: string): Promise<Product | undefined>;
   getAllProducts(): Promise<Product[]>;
+  getProductsByCategory(category: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, updates: Partial<Product>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
@@ -74,7 +75,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return (result.rowCount || 0) > 0;
+    return result.changes > 0;
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -111,6 +112,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(products);
   }
 
+  async getProductsByCategory(category: string): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.category, category));
+  }
+
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const [product] = await db.insert(products).values(insertProduct).returning();
     return product;
@@ -123,7 +128,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     const result = await db.delete(products).where(eq(products.id, id));
-    return (result.rowCount || 0) > 0;
+    return result.changes > 0;
   }
 
   // Order methods
@@ -190,12 +195,12 @@ export class DatabaseStorage implements IStorage {
 
   async removeFromCart(id: string): Promise<boolean> {
     const result = await db.delete(cartItems).where(eq(cartItems.id, id));
-    return (result.rowCount || 0) > 0;
+    return result.changes > 0;
   }
 
   async clearCart(userId: string): Promise<boolean> {
     const result = await db.delete(cartItems).where(eq(cartItems.userId, userId));
-    return (result.rowCount || 0) >= 0;
+    return result.changes >= 0;
   }
 
   // Notification methods
@@ -229,7 +234,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(notifications)
       .set({ isRead: true })
       .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
-    return (result.rowCount || 0) >= 0;
+    return result.changes >= 0;
   }
 }
 

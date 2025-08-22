@@ -1,15 +1,15 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, integer, timestamp, boolean, json } from "drizzle-orm/pg-core";
+import { sqliteTable, text, real, integer, blob } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
   publicName: text("public_name"),
-  balance: decimal("balance", { precision: 10, scale: 2 }).default("0.00"),
+  balance: real("balance").default(0.00),
   role: text("role").default("user"), // user, admin
   telegramUsername: text("telegram_username"),
   threemaUsername: text("threema_username"),
@@ -17,88 +17,88 @@ export const users = pgTable("users", {
   sessionUsername: text("session_username"),
   inviteCode: text("invite_code"),
   totpSecret: text("totp_secret"),
-  totpEnabled: boolean("totp_enabled").default(false),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  totpEnabled: integer("totp_enabled", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const inviteCodes = pgTable("invite_codes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const inviteCodes = sqliteTable("invite_codes", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   code: text("code").notNull().unique(),
-  usedBy: varchar("used_by").references(() => users.id),
+  usedBy: text("used_by").references(() => users.id),
   registrationCount: integer("registration_count").default(0),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const products = pgTable("products", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const products = sqliteTable("products", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
   title: text("title").notNull(),
   description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: real("price").notNull(),
   category: text("category").notNull(), // generator, shop
   subcategory: text("subcategory"),
   type: text("type").notNull(), // license_key, text_lines, service, digital_file
   stock: integer("stock"),
   maxPerUser: integer("max_per_user").default(1),
-  images: json("images").$type<string[]>().default([]),
-  tags: json("tags").$type<string[]>().default([]),
-  isActive: boolean("is_active").default(true),
-  sellerId: varchar("seller_id").references(() => users.id),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  images: text("images", { mode: "json" }).$type<string[]>().default([]),
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  sellerId: text("seller_id").references(() => users.id),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const orders = pgTable("orders", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  productId: varchar("product_id").references(() => products.id).notNull(),
+export const orders = sqliteTable("orders", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  userId: text("user_id").references(() => users.id).notNull(),
+  productId: text("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").default(1),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  totalAmount: real("total_amount").notNull(),
   status: text("status").default("processing"), // processing, delivered, in_resolution, refunded
-  orderData: json("order_data"),
-  createdAt: timestamp("created_at").default(sql`now()`),
-  deliveredAt: timestamp("delivered_at"),
+  orderData: text("order_data", { mode: "json" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
+  deliveredAt: integer("delivered_at", { mode: "timestamp" }),
 });
 
-export const transactions = pgTable("transactions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+export const transactions = sqliteTable("transactions", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  userId: text("user_id").references(() => users.id).notNull(),
   type: text("type").notNull(), // deposit, purchase, refund
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: real("amount").notNull(),
   currency: text("currency").default("USD"),
   description: text("description"),
-  orderId: varchar("order_id").references(() => orders.id),
+  orderId: text("order_id").references(() => orders.id),
   cryptoAddress: text("crypto_address"),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const messages = pgTable("messages", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  senderId: varchar("sender_id").references(() => users.id).notNull(),
-  receiverId: varchar("receiver_id").references(() => users.id).notNull(),
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  senderId: text("sender_id").references(() => users.id).notNull(),
+  receiverId: text("receiver_id").references(() => users.id).notNull(),
   content: text("content").notNull(),
-  isRead: boolean("is_read").default(false),
-  orderId: varchar("order_id").references(() => orders.id),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  isRead: integer("is_read", { mode: "boolean" }).default(false),
+  orderId: text("order_id").references(() => orders.id),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const cartItems = pgTable("cart_items", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  productId: varchar("product_id").references(() => products.id).notNull(),
+export const cartItems = sqliteTable("cart_items", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  userId: text("user_id").references(() => users.id).notNull(),
+  productId: text("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").default(1),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
-export const notifications = pgTable("notifications", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+export const notifications = sqliteTable("notifications", {
+  id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
+  userId: text("user_id").references(() => users.id).notNull(),
   title: text("title").notNull(),
   message: text("message").notNull(),
   type: text("type").notNull(), // order, transaction, system, admin
-  isRead: boolean("is_read").default(false),
-  orderId: varchar("order_id").references(() => orders.id),
-  transactionId: varchar("transaction_id").references(() => transactions.id),
-  createdAt: timestamp("created_at").default(sql`now()`),
+  isRead: integer("is_read", { mode: "boolean" }).default(false),
+  orderId: text("order_id").references(() => orders.id),
+  transactionId: text("transaction_id").references(() => transactions.id),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
 // Schema validations

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Press Animation Examples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        /* Custom CSS Animations */
+        .btn-scale {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .btn-scale:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-translate {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 0 rgba(0,0,0,0.3);
+        }
+        .btn-translate:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 0 0 rgba(0,0,0,0);
+        }
+        
+        .btn-3d {
+            position: relative;
+            top: 0;
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 #2563eb, 0 8px 10px rgba(0,0,0,0.2);
+        }
+        .btn-3d:active {
+            top: 4px;
+            box-shadow: 0 2px 0 #2563eb, 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-spring {
+            transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .btn-spring:active {
+            transform: scale(0.9);
+        }
+        
+        .btn-rotate {
+            transition: transform 0.15s ease;
+        }
+        .btn-rotate:active {
+            transform: scale(0.95) rotate(1deg);
+        }
+        
+        /* Ripple Effect */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-ripple::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .btn-ripple:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Glow Effect */
+        .btn-glow {
+            transition: all 0.15s ease;
+        }
+        .btn-glow:active {
+            transform: scale(0.96);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Squish Effect */
+        .btn-squish {
+            transition: transform 0.1s ease;
+        }
+        .btn-squish:active {
+            transform: scale(0.95, 0.87);
+        }
+        
+        /* Pulse Effect */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        .btn-pulse:active {
+            animation: pulse 0.3s ease;
+        }
+        
+        /* Border Pop */
+        .btn-border-pop {
+            transition: all 0.1s ease;
+            border: 2px solid transparent;
+        }
+        .btn-border-pop:active {
+            transform: scale(0.96);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8 text-gray-800">Button Press Animation Examples</h1>
+        
+        <!-- CSS-Based Animations -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">CSS-Based Animations</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                
+                <div class="text-center">
+                    <button class="btn-scale bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600">
+                        Scale Down
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">transform: scale(0.95)</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-translate bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600">
+                        Push Down
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">translateY + shadow</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-3d bg-blue-600 text-white px-6 py-3 rounded-lg font-medium">
+                        3D Button
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">3D shadow effect</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-spring bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600">
+                        Spring
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Bouncy animation</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-rotate bg-pink-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-600">
+                        Rotate
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Scale + rotate</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-ripple bg-indigo-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-600">
+                        Ripple
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Material ripple</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-glow bg-cyan-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-cyan-600">
+                        Glow
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Glow on press</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-squish bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600">
+                        Squish
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Asymmetric scale</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-pulse bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600">
+                        Pulse
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Pulse animation</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn-border-pop bg-white text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-50">
+                        Border Pop
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">Border appears</p>
+                </div>
+                
+            </div>
+        </section>
+        
+        <!-- Tailwind-Only Examples -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Pure Tailwind Examples</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                
+                <div class="text-center">
+                    <button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:scale-95 transition-transform duration-75">
+                        Scale 95
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">active:scale-95</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 active:scale-90 transition-transform duration-100">
+                        Scale 90
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">active:scale-90</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 shadow-lg active:shadow-sm active:translate-y-0.5 transition-all duration-75">
+                        Shadow + Move
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">shadow + translate</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-pink-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-600 active:bg-pink-700 active:scale-95 transition-all duration-75">
+                        Color + Scale
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">bg change + scale</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-600 active:ring-4 active:ring-yellow-300 active:scale-95 transition-all duration-75">
+                        Ring Effect
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">active:ring</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-indigo-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-600 active:scale-x-95 active:scale-y-90 transition-transform duration-75">
+                        Squish XY
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">scale-x/y separate</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-gray-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 active:opacity-75 transition-all duration-75">
+                        Opacity
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">active:opacity-75</p>
+                </div>
+                
+                <div class="text-center">
+                    <button class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 active:scale-95 active:shadow-inner transition-all duration-75">
+                        Gradient
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">gradient + inner shadow</p>
+                </div>
+                
+            </div>
+        </section>
+        
+        <!-- Combination Examples -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Best Combinations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Recommended: Subtle & Professional</h3>
+                    <button class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 active:scale-[0.98] active:shadow-sm shadow-md transition-all duration-75">
+                        Professional Button
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">active:scale-[0.98] active:shadow-sm transition-all duration-75</code>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Material Design Style</h3>
+                    <button class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 active:scale-95 active:bg-green-800 shadow-lg active:shadow-sm transition-all duration-100 ease-out">
+                        Material Button
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">active:scale-95 active:bg-green-800 shadow-lg active:shadow-sm</code>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Playful & Fun</h3>
+                    <button class="w-full bg-gradient-to-r from-pink-500 to-violet-500 text-white px-6 py-3 rounded-lg font-bold hover:from-pink-600 hover:to-violet-600 active:scale-90 active:rotate-1 transition-all duration-150">
+                        Fun Button
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">active:scale-90 active:rotate-1 transition-all duration-150</code>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Outlined Style</h3>
+                    <button class="w-full border-2 border-blue-600 text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 active:scale-95 active:bg-blue-100 transition-all duration-75">
+                        Outlined Button
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">border-2 active:scale-95 active:bg-blue-100</code>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Ghost Button</h3>
+                    <button class="w-full text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 active:scale-95 active:bg-gray-200 transition-all duration-75">
+                        Ghost Button
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">hover:bg-gray-100 active:scale-95 active:bg-gray-200</code>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-semibold mb-3">Icon Button</h3>
+                    <button class="w-full bg-black text-white px-6 py-3 rounded-full font-medium hover:bg-gray-900 active:scale-90 shadow-xl active:shadow-md transition-all duration-100">
+                        <span class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                            Continue
+                        </span>
+                    </button>
+                    <code class="text-xs text-gray-600 mt-3 block">rounded-full active:scale-90 shadow-xl active:shadow-md</code>
+                </div>
+                
+            </div>
+        </section>
+        
+        <!-- Interactive Playground -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-semibold mb-6 text-gray-700">Interactive Playground</h2>
+            <div class="bg-white p-8 rounded-lg shadow-md">
+                <p class="mb-6 text-gray-600">Test different animation timings and effects:</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:scale-95 transition-transform duration-[50ms]">
+                        50ms (Fast)
+                    </button>
+                    <button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:scale-95 transition-transform duration-75">
+                        75ms (Default)
+                    </button>
+                    <button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:scale-95 transition-transform duration-100">
+                        100ms
+                    </button>
+                    <button class="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 active:scale-95 transition-transform duration-150">
+                        150ms (Smooth)
+                    </button>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="font-semibold mb-4">Different Scale Values:</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <button class="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 active:scale-[0.98] transition-transform duration-75">
+                            Scale 98%
+                        </button>
+                        <button class="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 active:scale-95 transition-transform duration-75">
+                            Scale 95%
+                        </button>
+                        <button class="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 active:scale-90 transition-transform duration-75">
+                            Scale 90%
+                        </button>
+                        <button class="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 active:scale-[0.85] transition-transform duration-75">
+                            Scale 85%
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Implementation Notes -->
+        <section class="bg-gray-800 text-white p-8 rounded-lg">
+            <h2 class="text-2xl font-semibold mb-4">Implementation Notes</h2>
+            <ul class="space-y-2 text-gray-300">
+                <li>✓ <strong>Recommended:</strong> Use <code class="bg-gray-700 px-2 py-1 rounded">active:scale-95 transition-transform duration-75</code> for most buttons</li>
+                <li>✓ Keep animations under 150ms for responsive feel</li>
+                <li>✓ Combine scale with shadow changes for depth perception</li>
+                <li>✓ Test on mobile devices - touch feedback is crucial</li>
+                <li>✓ Consider adding haptic feedback for mobile (navigator.vibrate)</li>
+                <li>✓ Ensure animations don't interfere with rapid clicking</li>
+                <li>✓ Use <code class="bg-gray-700 px-2 py-1 rounded">transition-all</code> when animating multiple properties</li>
+            </ul>
+        </section>
+        
+    </div>
+    
+    <script>
+        // Optional: Add haptic feedback for mobile
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', () => {
+                if (navigator.vibrate) {
+                    navigator.vibrate(10); // 10ms vibration
+                }
+            });
+        });
+    </script>
+</body>
+</html>

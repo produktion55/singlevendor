@@ -45,10 +45,16 @@ export function Profile() {
     session: (user as any)?.sessionUsername || ""
   });
 
-  // Update TOTP status when user data changes
+  // Update TOTP status and contact methods when user data changes
   useEffect(() => {
     if (user) {
       setIsTotpEnabled((user as any)?.totpEnabled || false);
+      setContactMethods({
+        telegram: (user as any)?.telegramUsername || "",
+        threema: (user as any)?.threemaUsername || "",
+        signal: (user as any)?.signalUsername || "",
+        session: (user as any)?.sessionUsername || ""
+      });
     }
   }, [user]);
 
