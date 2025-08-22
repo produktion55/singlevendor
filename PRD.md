@@ -9,14 +9,14 @@ SpendSavvy is a single vendor ecommerce shop with particular focus on the german
 
 #### 1. Digital Product Buyer "Alex"
 - **Age**: 15-50
-- **Needs**: Software licenses, digital content, custom automated invoice generation, secure transactions
+- **Needs**: Software licenses, digital content, custom automated invoice generation, secure transactions, simple navigation
 - **Pain Points**: Manual document creation
 - **Value**: One-stop platform with verified products and secure payments
 
 #### 2. Platform Administrator "Thomas"
 - **Role**: Platform management
 - **Needs**: User oversight, product management, order processing
-- **Value**: Comprehensive admin tools with analytics
+- **Value**: user controls, system monitoring
 
 ## Core Features & Requirements
 
@@ -40,14 +40,19 @@ SpendSavvy is a single vendor ecommerce shop with particular focus on the german
   - Password management
   - TOTP 2FA configuration
   - Session management
-
+- **Orders History**
+  - Order history viewing
+- **Transaction history**
+  - Transaction history viewing
+  
 ### 2. Digital Marketplace
 
 #### 2.1 Product Catalog
 - **Product Types**
   - License keys (software, services)
   - Text lines (codes, serials)
-  - Digital files
+  - Services (digital services, consultations)
+  - Downloadable content (Digital files9
   - automated PDF/PNG generation served by external server
   
 - **Product Attributes**
