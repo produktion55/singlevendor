@@ -1,0 +1,216 @@
+
+create sample products, users & transactions in the database so the app feels alive.
+
+
+User story design: 
+
+General design:
+- mobile responsiveness is required.
+- Bootstrap aesthethic with mature, professional aesthetic
+- Clean, minimalist approach with generous whitespace
+- no hero page
+- Inter sans Font, a monospaced font for things like Crypto Adresses
+
+
+First Page users see:
+
+- page is divided into two 50% sections, that are stacked vertically on mobile
+
+first section is for registration/login Form (tabs),
+the second section shows the site Logo, site Slogan and some cards that explain the Website features
+for registration, an invite code is needed. 
+
+Invite Codes:
+there should be a master list of valid invite codes, and i want to track which invite codes generates the most registrations. The site is invite-only.
+
+4. File Storage:
+File storage has to be local (on the server), not on cloud storage services like S3
+
+
+- messages & notifications load with SSE, not websockets.
+
+
+Footer:
+- separated into 4 sections, same footer shows on all pages.
+- first section shows:
+> Site Title (site name) with the site Slogan
+> Contact
+> FAQ
+
+the second, third and fourth section is blank for now.
+
+Below the 4 sections is
+> a Language toggle
+> Theme toggle (white/dark/oled/colorful)
+
+
+Desktop Sidebar Navigation (Auto-hide, expands on hover, shows icons when hidden) (Hamburger menu on mobile)
+- Auto-hide Sidebar, expands on hovering, otherwise mini sidebar
+- the sidebar consists of the following categories/pages and subcategories/subpages:
+
+> Generator
+>> All Generators
+>> Invoices
+>>> Amazon Invoice A4 PNG
+>>> MediaMarkt Invoice PDF
+>>> Saturn Invoice A4 PNG
+>>> Christ Invoice PNG
+>> Kontoauszug
+>>> Sparkasse Auszug PDF
+>> Karten
+>>> Sparkassenkarte PNG
+>> ID & PP
+>>> German ID
+>>> German ID Scan
+>> Misc
+>>> Einlieferungsbeleg Email
+>>> Einlieferungsbeleg physisch
+
+> Tools
+>> Crypto QR Code
+>> IBAN
+>> Name & Adress
+
+Shop
+>> PSD
+>> Tutorials
+>> Real Docs
+>> Leaks
+
+> Admin (this should only show for users that have admin rank)
+>> Sales
+>> Products
+>> Admin Settings
+
+
+
+Desktop Header:
+- search bar, cart icon, notification bell  icon, wallet icon with balance displayed, profile icon
+
+- profile icon opens up
+
+
+Profile Page:
+- first tab displays current balance and “deposit BTC”, “deposit LTC”, “deposit XMR” fields
+- second tab shows Orders (for visitors):
+-- row based, one purchase per row, row has following columns:
+	-- shows product title
+	-- product description
+	-- order ID, admin seller name
+	-- buying date,
+	-- “DOWNLOAD / COPY” button (copy for products with small text)
+	-- Contact Support Button (opens support ticket with product&order ID as context),
+	-- green “received order ✔ ” button (small text saying “mark order as received”)
+	-- or red “Request Refund & Contact Support”
+	-- or orange “In Resolution” (small text saying “Refund requested - awaiting 	resolution“) button.
+	-- black “view order” button to show all order details 
+	-- for Completed orders, shows round, light green “Delivered” tag.
+	-- small filter for: “all orders” “generated/delivered” “generating/shipping” “in 	resolution”, 	"refunded"
+
+
+	- Each order/transaction in a row with left-aligned icon, details, and right-aligned 	amount
+
+	- Icon circles: Colored backgrounds (green for incoming, red for outgoing, orange 	for refunded balance) with appropriate Lucide icons
+	- Transaction details: Title, description, and timestamp in decreasing text sizes
+	- Amount display: Color-coded (+green for top up, -red for purchases, -yellow for 	refunds)
+
+- third tab shows account settings
+	- shows: username “(cant be changed)” public name “(cant be changed)” new 	password & confirm new password text field and “update password” button (blue)
+	- security card: setup two-factor authentication (TOTP) button
+	- “contact methods for moderation & administrators”: telegram username, threema 	username, signal username, session username each as a text field with “save 	contact methods” button (blue)
+	- logout button
+
+Product Details Page is divided in two parts,
+left side shows the product images, right side the optional Text fields if its a “Generator” product, right side is also for price button & add to cart & buy now button.
+
+
+product filters in shop catalogue (only show if more than 0 products has this attribute):
+- free
+- paid
+- germany
+- europe
+- printable
+- photorealistic
+
+Messages Page:
+- 1-4 and 3-4 layout (25 % 75%)
+- first panel: List of conversations showing:
+- Username (shows if support ticket chat, product order chat or private chat),
+- Preview of last message (truncated),
+- Timestamp (e.g., "2 min ago", "1 hour ago"),
+- Currently selected conversation highlighted with blue left border
+
+- second panel (75% of the size) (chat view):
+- Header showing:
+- User avatar/initials in circle
+- Username
+- Three-dot menu icon on far right
+- Incoming messages in gray bubbles (left-aligned)
+- Outgoing messages in blue bubbles (right-aligned)
+- Timestamps below messages
+- Message input at bottom:
+- Text field with placeholder "Type your message…"
+- Blue "Send" button with paper plane icon
+
+Messages Page general design style:
+- Clean, modern messaging interface similar to WhatsApp/Telegram
+- Blue accent color
+- Rounded message bubbles
+- Subtle shadows and borders
+
+
+
+
+
+Product Listing Page
+- A horizontal filter bar with dropdown 'Subcategories' and Filters Function (opens up filters)
+- Shows the page title (category title) with a subtitle depending on the product category
+- for licenses & keys category, it should say “Purchase software licenses, activation keys, and digital credentials.” and “licenses & keys” as the page title above
+
+Product cards displayed in a grid layout, each containing:
+• square thumbnail with product image
+• Product title in bold
+• Brief product description text
+• attribute tags (e.g., 'reselling', 'selfmade' ‘generator’ ‘printable’ ‘photorealistic’)
+• Price prominently displayed
+• shows inventory/stock amount if product has limited stock
+• Shopping cart icon and blue 'Buy Now' button
+
+
+
+
+
+
+admin Page:
+- can add new products
+- can manage his products row-based list layout view (like woocommerce products administration page)
+- product name, product type (license key, text lines, service, digital file), price, stock, status (active/unpublished), actions (view icon / blue edit icon / red delete icon)
+- edit action: Remove/update quantity options
+
+
+Adding new Products:
+- maximum stock buyable per user can be defined (e.g. maximum 1 sale per user if its a static digital file)
+- product description
+- Category selection, subcategory selection
+- main product thumbnail Image upload (maximum 4 mb), product images (maximum 10 MB)
+- product title
+- product price
+
+
+
+admin sales page:
+- list layout view,
+- #order id, product, customer name, amount, status (delivered, processing, in resolution / refunded), date, actions (views order, edit order)
+
+
+
+
+
+
+Checkout Page
+- regular checkout page
+
+Cart opens up from the right side
+
+
+users can have multiple Perks (either assigned manually or bought), e.g. 1x perk gives 50% Rebate On invoice generation and 95% Rebate on specific product e.g. "Beleg Generator)
