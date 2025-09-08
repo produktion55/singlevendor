@@ -2,8 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Copy, Download, CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, User, Package, CreditCard } from "lucide-react";
+import { Copy, Download, CheckCircle, Clock, AlertCircle, RefreshCw, Calendar, User, Package, CreditCard, FileText } from "lucide-react";
+import { FormSummary } from "@/components/generators/FormBuilder";
 import { type Order, type Product } from "@shared/schema";
+import type { FormBuilderSchema } from "@shared/types/formBuilder";
 
 interface OrderDetailsModalProps {
   order: Order | null;
@@ -107,7 +109,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{product.description}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-sm text-gray-500">Type: {product.type}</span>
-                    <span className="font-bold text-lg">€{parseFloat(product.price).toFixed(2)}</span>
+                    <span className="font-bold text-lg">€{Number(product.price).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -134,6 +136,52 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
               <p className="text-sm font-medium">Admin Seller</p>
             </div>
           </div>
+
+          {/* Form Builder Data (if present) */}
+          {order.orderData && (order.orderData as any).formBuilderData && product?.formBuilderJson && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <h3 className="font-semibold flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <span>Form Configuration</span>
+                </h3>
+                
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <FormSummary
+                    formBuilderSchema={product.formBuilderJson as FormBuilderSchema}
+                    formData={(order.orderData as any).formBuilderData}
+                    compact={false}
+                    showTitle={false}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+          
+          {/* Legacy Generator Data (if present) */}
+          {order.orderData && (order.orderData as any).formData && !(order.orderData as any).formBuilderData && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <h3 className="font-semibold flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <span>Generator Configuration</span>
+                </h3>
+                
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {Object.entries((order.orderData as any).formData).map(([key, value]) => (
+                      <div key={key}>
+                        <span className="font-medium text-gray-600 dark:text-gray-400">{key}:</span>
+                        <span className="ml-2">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Digital Content (if delivered) */}
           {order.status === "delivered" && order.orderData && (

@@ -1,13 +1,26 @@
 import React from "react";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { FormSummary } from "@/components/generators/FormBuilder";
 import { useCart } from "@/hooks/useCart";
+import { useQuery } from "@tanstack/react-query";
+import { type Product } from "@shared/schema";
+import type { FormBuilderSchema } from "@shared/types/formBuilder";
 
 export function CartSidebar() {
   const { items, total, isOpen, setIsOpen, removeItem, updateQuantity, isLoading } = useCart();
+  
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const getProductConfig = (productId: string): FormBuilderSchema | null => {
+    const product = products.find(p => p.id === productId);
+    return product?.formBuilderJson as FormBuilderSchema | null;
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -38,6 +51,59 @@ export function CartSidebar() {
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">{item.title}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{item.type}</p>
+                    
+                    {/* Show form summary for items with form builder data */}
+                    {item.formBuilderData && (
+                      <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                        <div className="flex items-center gap-1 text-xs text-blue-700 dark:text-blue-300 mb-1">
+                          <FileText className="w-3 h-3" />
+                          <span>Form Data</span>
+                        </div>
+                        {(() => {
+                          const config = getProductConfig(item.productId);
+                          if (config) {
+                            return (
+                              <FormSummary
+                                formBuilderSchema={config}
+                                formData={item.formBuilderData}
+                                compact={true}
+                                showTitle={false}
+                              />
+                            );
+                          }
+                          // Fallback for when config is not available
+                          return (
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {Object.entries(item.formBuilderData).slice(0, 2).map(([key, value]) => (
+                                <div key={key}>
+                                  {key}: {String(value)}
+                                </div>
+                              ))}
+                              {Object.keys(item.formBuilderData).length > 2 && (
+                                <div>...and {Object.keys(item.formBuilderData).length - 2} more fields</div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    
+                    {/* Show legacy generator data */}
+                    {item.generatorData && (
+                      <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                        <div className="text-xs text-gray-600 dark:text-gray-400">
+                          {Object.entries(item.generatorData).slice(0, 2).map(([key, value]) => (
+                            <div key={key}>
+                              {key}: {String(value)}
+                            </div>
+                          ))}
+                          {Object.keys(item.generatorData).length > 2 && (
+                            <div>...and {Object.keys(item.generatorData).length - 2} more fields</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center space-x-2">
                         <Button

@@ -117,7 +117,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db.insert(products).values(insertProduct).returning();
+    // Ensure images is properly formatted as an array
+    const productData = {
+      ...insertProduct,
+      images: insertProduct.images || [],
+      tags: insertProduct.tags || []
+    };
+    const [product] = await db.insert(products).values(productData as any).returning();
     return product;
   }
 
@@ -161,6 +167,15 @@ export class DatabaseStorage implements IStorage {
     return transaction;
   }
 
+  
+  // Cart methods with metadata support
+  async getCartByUserIdWithMetadata(userId: string): Promise<any[]> {
+    const items = await db.select().from(cartItems).where(eq(cartItems.userId, userId));
+    return items.map(item => ({
+      ...item,
+      metadata: typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata
+    }));
+  }
   // Cart methods
   async getCartByUserId(userId: string): Promise<CartItem[]> {
     return await db.select().from(cartItems).where(eq(cartItems.userId, userId));
@@ -172,15 +187,18 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(cartItems.userId, insertCartItem.userId), eq(cartItems.productId, insertCartItem.productId)));
 
     if (existingItem) {
-      // Update quantity if item already exists
+      // Update quantity and metadata if item already exists
       const [updatedItem] = await db.update(cartItems)
-        .set({ quantity: (existingItem.quantity || 1) + (insertCartItem.quantity || 1) })
+        .set({
+          quantity: (existingItem.quantity || 1) + (insertCartItem.quantity || 1),
+          metadata: insertCartItem.metadata || existingItem.metadata
+        })
         .where(eq(cartItems.id, existingItem.id))
         .returning();
       return updatedItem;
     }
 
-    // Create new cart item
+    // Create new cart item with metadata
     const [cartItem] = await db.insert(cartItems).values(insertCartItem).returning();
     return cartItem;
   }

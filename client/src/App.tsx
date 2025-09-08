@@ -22,6 +22,7 @@ import { ProductDetails } from "@/pages/ProductDetails";
 import { MyOrders } from "@/pages/MyOrders";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
+import TestFormBuilder from "@/pages/TestFormBuilder";
 
 function Router() {
   const { isAuthenticated } = useAuth();
@@ -62,6 +63,7 @@ function Router() {
           {(params) => <EditProduct productId={params.id} />}
         </Route>
         <Route path="/admin/:section" component={AdminPanel} />
+        <Route path="/test-form-builder" component={TestFormBuilder} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

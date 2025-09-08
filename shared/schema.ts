@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { sqliteTable, text, real, integer, blob } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import type { FormBuilderSchema, FormDisplayMode, FormSubmissionData } from './types/formBuilder';
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey().default(sql`(lower(hex(randomblob(16))))`),
@@ -44,6 +45,10 @@ export const products = sqliteTable("products", {
   tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
   isActive: integer("is_active", { mode: "boolean" }).default(true),
   sellerId: text("seller_id").references(() => users.id),
+  customFields: text("custom_fields", { mode: "json" }).$type<{ name: string; label: string; type: string; required: boolean }[]>(),
+  // New form builder fields
+  formBuilderJson: text("form_builder_json", { mode: "json" }).$type<FormBuilderSchema | null>(),
+  formDisplayMode: text("form_display_mode").$type<FormDisplayMode>().default("sidebar"),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
@@ -54,7 +59,11 @@ export const orders = sqliteTable("orders", {
   quantity: integer("quantity").default(1),
   totalAmount: real("total_amount").notNull(),
   status: text("status").default("processing"), // processing, delivered, in_resolution, refunded
-  orderData: text("order_data", { mode: "json" }),
+  orderData: text("order_data", { mode: "json" }).$type<{
+    customFields?: Record<string, any>;  // Legacy custom fields
+    formData?: FormSubmissionData;  // New form builder data
+    [key: string]: any;  // Additional data
+  }>(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
   deliveredAt: integer("delivered_at", { mode: "timestamp" }),
 });
@@ -86,6 +95,10 @@ export const cartItems = sqliteTable("cart_items", {
   userId: text("user_id").references(() => users.id).notNull(),
   productId: text("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").default(1),
+  metadata: text("metadata", { mode: "json" }).$type<{
+    customFields?: Record<string, any>;  // Legacy custom fields
+    formBuilderData?: FormSubmissionData;  // New form builder data
+  }>(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
@@ -101,6 +114,102 @@ export const notifications = sqliteTable("notifications", {
   createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`),
 });
 
+// Form Builder Validation Schemas
+export const conditionalLogicSchema = z.object({
+  enabled: z.boolean(),
+  fieldId: z.string(),
+  value: z.string()
+});
+
+export const fieldValidationSchema = z.object({
+  alphanumeric: z.boolean().optional(),
+  minLength: z.number().optional(),
+  maxLength: z.number().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  pattern: z.string().optional(),
+  email: z.boolean().optional()
+});
+
+export const baseFieldSchema = z.object({
+  type: z.enum(['text', 'select', 'textarea', 'date', 'number', 'email']),
+  label: z.string(),
+  name: z.string(),
+  placeholder: z.string().optional(),
+  defaultValue: z.union([z.string(), z.number(), z.array(z.string())]).optional(),
+  description: z.string().optional(),
+  required: z.boolean().optional(),
+  conditionalLogic: conditionalLogicSchema.optional(),
+  validation: fieldValidationSchema.optional(),
+  readonly: z.boolean().optional(),
+  disabled: z.boolean().optional()
+});
+
+export const selectFieldSchema = baseFieldSchema.extend({
+  type: z.literal('select'),
+  options: z.array(z.string()),
+  optionPrices: z.array(z.number()).optional(),
+  optionPriceType: z.enum(['fixed', 'percentage']).optional(),
+  multiple: z.boolean().optional()
+});
+
+export const textFieldSchema = baseFieldSchema.extend({
+  type: z.literal('text'),
+  defaultValue: z.string().optional()
+});
+
+export const emailFieldSchema = baseFieldSchema.extend({
+  type: z.literal('email'),
+  defaultValue: z.string().optional()
+});
+
+export const textareaFieldSchema = baseFieldSchema.extend({
+  type: z.literal('textarea'),
+  defaultValue: z.string().optional(),
+  rows: z.number().optional(),
+  cols: z.number().optional()
+});
+
+export const numberFieldSchema = baseFieldSchema.extend({
+  type: z.literal('number'),
+  defaultValue: z.number().optional(),
+  step: z.number().optional(),
+  min: z.number().optional(),
+  max: z.number().optional()
+});
+
+export const dateFieldSchema = baseFieldSchema.extend({
+  type: z.literal('date'),
+  defaultValue: z.string().optional(),
+  min: z.string().optional(),
+  max: z.string().optional()
+});
+
+export const fieldSchema = z.discriminatedUnion('type', [
+  textFieldSchema,
+  emailFieldSchema,
+  textareaFieldSchema,
+  numberFieldSchema,
+  dateFieldSchema,
+  selectFieldSchema
+]);
+
+export const sectionSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  width: z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]),
+  isPadding: z.boolean().optional(),
+  collapsible: z.boolean().optional(),
+  expanded: z.boolean().optional(),
+  fields: z.array(fieldSchema)
+});
+
+export const formBuilderSchema = z.object({
+  sections: z.array(sectionSchema)
+});
+
+export const formDisplayModeSchema = z.enum(['sidebar', 'fullwidth']);
+
 // Schema validations
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -111,12 +220,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
+}).extend({
+  formBuilderJson: formBuilderSchema.nullable().optional(),
+  formDisplayMode: formDisplayModeSchema.default('sidebar')
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
   createdAt: true,
   deliveredAt: true,
+}).extend({
+  orderData: z.object({
+    customFields: z.record(z.any()).optional(),
+    formData: z.record(z.any()).optional()
+  }).catchall(z.any()).optional()
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -132,6 +249,11 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
   createdAt: true,
+}).extend({
+  metadata: z.object({
+    customFields: z.record(z.any()).optional(),
+    formBuilderData: z.record(z.any()).optional()
+  }).optional()
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
@@ -155,3 +277,24 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type InviteCode = typeof inviteCodes.$inferSelect;
+
+// Re-export form builder types for convenience
+export type {
+  FormBuilderSchema,
+  FormDisplayMode,
+  FormSubmissionData,
+  Section,
+  Field,
+  FieldType,
+  ConditionalLogic,
+  FieldValidation,
+  TextField,
+  EmailField,
+  TextareaField,
+  NumberField,
+  DateField,
+  SelectField,
+  OptionPriceType,
+  FormPricingCalculation,
+  FormValidationResult
+} from './types/formBuilder';

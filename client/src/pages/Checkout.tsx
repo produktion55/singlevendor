@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CreditCard, Wallet, Lock, ArrowLeft } from "lucide-react";
+import { CreditCard, Wallet, Lock, ArrowLeft, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { FormSummary } from "@/components/generators/FormBuilder";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type Product } from "@shared/schema";
+import type { FormBuilderSchema } from "@shared/types/formBuilder";
 
 export function Checkout() {
   const { items, total, clearCart } = useCart();
@@ -99,16 +101,37 @@ export function Checkout() {
 
         // For digital products, mark as delivered instantly
         const isDigitalProduct = ['license_key', 'digital_file', 'text_lines'].includes(product.type);
+        const isGenerator = product.category === "generator";
         const orderStatus = isDigitalProduct ? "delivered" : "processing";
 
-        // Create order
-        const createdOrder = await createOrderMutation.mutateAsync({
+        // Prepare order data
+        const orderData: any = {
           userId: user.id,
           productId: actualProductId,
           quantity: item.quantity,
           totalAmount: item.price * item.quantity,
           status: orderStatus
-        });
+        };
+
+        // Add form builder data if present (new system)
+        if (item.formBuilderData) {
+          orderData.orderData = {
+            generatorType: product.title,
+            formBuilderData: item.formBuilderData,
+            fileReady: false
+          };
+        }
+        // Add legacy generator data if present
+        else if (isGenerator && item.generatorData) {
+          orderData.orderData = {
+            generatorType: product.title,
+            formData: item.generatorData,
+            fileReady: false
+          };
+        }
+
+        // Create order
+        const createdOrder = await createOrderMutation.mutateAsync(orderData);
 
         // If digital product, immediately mark as delivered
         if (isDigitalProduct && createdOrder.id) {
@@ -132,8 +155,9 @@ export function Checkout() {
       if (!isBuyNow) {
         clearCart();
       } else {
-        // Clear Buy Now item from sessionStorage
+        // Clear Buy Now item and generator data from sessionStorage
         sessionStorage.removeItem('buyNowItem');
+        sessionStorage.removeItem('generatorData');
       }
 
       // Invalidate user cache to refresh balance
@@ -225,6 +249,38 @@ export function Checkout() {
                               {tag}
                             </Badge>
                           ))}
+                        </div>
+                      )}
+                      
+                      {/* Show form summary for items with form builder data */}
+                      {item.formBuilderData && product?.formBuilderJson && (
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                          <div className="flex items-center gap-1 text-xs text-blue-700 dark:text-blue-300 mb-1">
+                            <FileText className="w-3 h-3" />
+                            <span>Configuration</span>
+                          </div>
+                          <FormSummary
+                            formBuilderSchema={product.formBuilderJson as FormBuilderSchema}
+                            formData={item.formBuilderData}
+                            compact={true}
+                            showTitle={false}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Show legacy generator data */}
+                      {item.generatorData && (
+                        <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md">
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
+                            {Object.entries(item.generatorData).slice(0, 3).map(([key, value]) => (
+                              <div key={key}>
+                                <span className="font-medium">{key}:</span> {String(value)}
+                              </div>
+                            ))}
+                            {Object.keys(item.generatorData).length > 3 && (
+                              <div className="text-gray-500">...and {Object.keys(item.generatorData).length - 3} more fields</div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

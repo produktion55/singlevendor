@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Plus, X, Upload } from "lucide-react";
+import { ArrowLeft, Plus, X, Upload, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FormBuilderConfig } from "@/components/admin/FormBuilderConfig";
+import { migrateCustomFieldsToFormBuilder } from "@/utils/migrateCustomFields";
 // import { ObjectUploader } from "@/components/ObjectUploader";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +59,10 @@ export function EditProduct({ productId }: { productId: string }) {
 
   const [currentImage, setCurrentImage] = useState("");
   const [currentTag, setCurrentTag] = useState("");
+  
+  // Form Builder state for generators
+  const [formBuilderJson, setFormBuilderJson] = useState("");
+  const [formDisplayMode, setFormDisplayMode] = useState<'sidebar' | 'fullwidth'>('sidebar');
 
   // Fetch product data
   const { data: product, isLoading } = useQuery({
@@ -85,6 +91,16 @@ export function EditProduct({ productId }: { productId: string }) {
         sellerId: product.sellerId || user?.id || "",
         customFields: product.customFields || [],
       });
+      
+      // Load form builder data if present
+      if (product.formBuilderJson) {
+        // Convert to string if it's an object
+        const jsonString = typeof product.formBuilderJson === 'string'
+          ? product.formBuilderJson
+          : JSON.stringify(product.formBuilderJson, null, 2);
+        setFormBuilderJson(jsonString);
+        setFormDisplayMode(product.formDisplayMode || 'sidebar');
+      }
     }
   }, [product, user?.id]);
 
@@ -209,6 +225,35 @@ export function EditProduct({ productId }: { productId: string }) {
     }));
   };
 
+  const migrateToFormBuilder = () => {
+    if (!formData.customFields || formData.customFields.length === 0) {
+      toast({
+        title: "No fields to migrate",
+        description: "Add some custom fields first or use the Form Builder directly.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const schema = migrateCustomFieldsToFormBuilder(formData.customFields, formData.title || 'Generator');
+      const jsonString = JSON.stringify(schema, null, 2);
+      setFormBuilderJson(jsonString);
+      setFormDisplayMode('sidebar');
+      
+      toast({
+        title: "Migration successful",
+        description: "Custom fields have been converted to Form Builder format. Please review and save.",
+      });
+    } catch (error) {
+      toast({
+        title: "Migration failed",
+        description: "Unable to convert custom fields. Please create the form manually.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -236,7 +281,7 @@ export function EditProduct({ productId }: { productId: string }) {
     const productData = {
       title: formData.title.trim(),
       description: formData.description.trim() || null,
-      price: formData.price,
+      price: parseFloat(formData.price),
       category: formData.category,
       subcategory: formData.subcategory.trim() || null,
       type: formData.type,
@@ -246,7 +291,9 @@ export function EditProduct({ productId }: { productId: string }) {
       tags: formData.tags.length > 0 ? formData.tags : null,
       isActive: formData.isActive,
       sellerId: formData.sellerId || null,
-      customFields: formData.customFields || null,
+      customFields: formData.category === "generator" && (!formBuilderJson || (typeof formBuilderJson === 'string' && !formBuilderJson.trim())) ? (formData.customFields || null) : null,
+      formBuilderJson: formData.category === "generator" && formBuilderJson && (typeof formBuilderJson === 'string' ? formBuilderJson.trim() : JSON.stringify(formBuilderJson)) ? formBuilderJson : null,
+      formDisplayMode: formData.category === "generator" && formBuilderJson && (typeof formBuilderJson === 'string' ? formBuilderJson.trim() : JSON.stringify(formBuilderJson)) ? formDisplayMode : null,
     };
 
     updateProductMutation.mutate(productData);
@@ -446,14 +493,51 @@ export function EditProduct({ productId }: { productId: string }) {
           </CardContent>
         </Card>
 
-        {/* Custom Fields for Generators */}
+        {/* Form Builder for Generators */}
         {formData.category === "generator" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Custom Fields for Webhook</CardTitle>
-              <p className="text-sm text-gray-500">Define custom fields that will be sent with webhook requests</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Form Builder Configuration</CardTitle>
+                <p className="text-sm text-gray-500">Configure the form that users will fill out when purchasing this generator</p>
+              </CardHeader>
+              <CardContent>
+                <FormBuilderConfig
+                  value={formBuilderJson}
+                  displayMode={formDisplayMode}
+                  onChange={setFormBuilderJson}
+                  onDisplayModeChange={setFormDisplayMode}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Legacy Custom Fields - Show only if no form builder JSON or for migration */}
+            {(!formBuilderJson || (typeof formBuilderJson === 'string' && !formBuilderJson.trim())) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Legacy Custom Fields (Deprecated)</CardTitle>
+                  <p className="text-sm text-gray-500">Use the Form Builder above for better functionality</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {formData.customFields && formData.customFields.length > 0 && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-blue-800">
+                          ℹ️ This product has legacy custom fields. Migrate to Form Builder for improved features.
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={migrateToFormBuilder}
+                          className="ml-4"
+                        >
+                          <ArrowRight className="w-4 h-4 mr-2" />
+                          Migrate to Form Builder
+                        </Button>
+                      </div>
+                    </div>
+                  )}
               {formData.customFields?.map((field, index) => (
                 <div key={index} className="p-4 border rounded-lg space-y-3">
                   <div className="flex justify-between items-center">
@@ -502,6 +586,7 @@ export function EditProduct({ productId }: { productId: string }) {
                           <SelectItem value="number">Number</SelectItem>
                           <SelectItem value="email">Email</SelectItem>
                           <SelectItem value="date">Date</SelectItem>
+                          <SelectItem value="textarea">Textarea</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -528,8 +613,10 @@ export function EditProduct({ productId }: { productId: string }) {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Custom Field
               </Button>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         {/* Stock & Limits */}

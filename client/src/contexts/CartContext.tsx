@@ -13,6 +13,8 @@ interface CartItemWithProduct {
   price: number;
   image: string;
   type: string;
+  generatorData?: Record<string, any>;
+  formBuilderData?: Record<string, any>;
 }
 
 interface CartContextType {
@@ -21,7 +23,15 @@ interface CartContextType {
   total: number;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  addItem: (item: { id: string; title: string; price: number; image: string; type: string }) => void;
+  addItem: (item: {
+    id: string;
+    title: string;
+    price: number;
+    image: string;
+    type: string;
+    generatorData?: Record<string, any>;
+    formBuilderData?: Record<string, any>;
+  }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -50,12 +60,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Merge cart items with product details
       return dbCartItems.map((cartItem: any) => {
         const product = products.find((p: any) => p.id === cartItem.productId);
+        const metadata = cartItem.metadata as any;
         return {
           ...cartItem,
           title: product?.title || "Unknown Product",
           price: parseFloat(product?.price || "0"),
           image: product?.images?.[0] || "",
-          type: product?.type || "unknown"
+          type: product?.type || "unknown",
+          generatorData: metadata?.generatorData,
+          formBuilderData: metadata?.formBuilderData,
         };
       });
     },
@@ -64,12 +77,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
-    mutationFn: async (item: { productId: string; quantity?: number }) => {
+    mutationFn: async (item: {
+      productId: string;
+      quantity?: number;
+      generatorData?: Record<string, any>;
+      formBuilderData?: Record<string, any>;
+    }) => {
       if (!user?.id) throw new Error("User not logged in");
-      const response = await apiRequest("POST", "/api/cart", {
-        userId: user.id,
+      const response = await apiRequest("POST", "/api/cart/items", {
         productId: item.productId,
-        quantity: item.quantity || 1
+        quantity: item.quantity || 1,
+        generatorData: item.generatorData,
+        formBuilderData: item.formBuilderData
       });
       return response.json();
     },
@@ -112,8 +131,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  const addItem = (item: { id: string; title: string; price: number; image: string; type: string }) => {
-    addToCartMutation.mutate({ productId: item.id, quantity: 1 });
+  const addItem = (item: {
+    id: string;
+    title: string;
+    price: number;
+    image: string;
+    type: string;
+    generatorData?: Record<string, any>;
+    formBuilderData?: Record<string, any>;
+  }) => {
+    addToCartMutation.mutate({
+      productId: item.id,
+      quantity: 1,
+      generatorData: item.generatorData,
+      formBuilderData: item.formBuilderData
+    });
   };
 
   const updateQuantity = (id: string, quantity: number) => {

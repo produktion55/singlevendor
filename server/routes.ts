@@ -5,6 +5,7 @@ import { insertUserSchema, insertProductSchema, insertOrderSchema, insertTransac
 import { z } from "zod";
 import * as speakeasy from "speakeasy";
 import * as QRCode from "qrcode";
+import { handleGeneratorWebhook, handleGeneratorCallback, validateFormData, calculateDynamicPrice } from "./generatorWebhook";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -239,7 +240,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         products = await storage.getAllProducts();
       }
       
-      res.json(products);
+      // Parse formBuilderJson if it's a string
+      const productsWithParsedJson = products.map(product => {
+        if (product.formBuilderJson && typeof product.formBuilderJson === 'string') {
+          try {
+            return {
+              ...product,
+              formBuilderJson: JSON.parse(product.formBuilderJson)
+            };
+          } catch (e) {
+            console.error('Failed to parse formBuilderJson for product', product.id, e);
+            return product;
+          }
+        }
+        return product;
+      });
+      
+      res.json(productsWithParsedJson);
     } catch (error) {
       console.error("Get products error:", error);
       res.status(500).json({ message: "Failed to fetch products" });
@@ -253,7 +270,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
       
-      res.json(product);
+      // Parse formBuilderJson if it's a string
+      let productWithParsedJson = product;
+      if (product.formBuilderJson && typeof product.formBuilderJson === 'string') {
+        try {
+          productWithParsedJson = {
+            ...product,
+            formBuilderJson: JSON.parse(product.formBuilderJson)
+          };
+        } catch (e) {
+          console.error('Failed to parse formBuilderJson for product', product.id, e);
+        }
+      }
+      
+      res.json(productWithParsedJson);
     } catch (error) {
       console.error("Get product error:", error);
       res.status(500).json({ message: "Failed to fetch product" });
@@ -262,12 +292,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/products", async (req, res) => {
     try {
-      const validatedData = insertProductSchema.parse(req.body);
+      // Parse formBuilderJson if it's a string
+      const productData = { ...req.body };
+      if (productData.formBuilderJson && typeof productData.formBuilderJson === 'string') {
+        try {
+          productData.formBuilderJson = JSON.parse(productData.formBuilderJson);
+        } catch (jsonError) {
+          return res.status(400).json({
+            message: "Invalid form builder JSON",
+            error: "The form builder JSON is not valid JSON format",
+            details: jsonError instanceof Error ? jsonError.message : "Unknown JSON parse error"
+          });
+        }
+      }
+
+      const validatedData = insertProductSchema.parse(productData);
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
       console.error("Create product error:", error);
-      res.status(400).json({ message: error instanceof z.ZodError ? "Invalid product data" : "Failed to create product" });
+      
+      // Provide more detailed error messages
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }));
+        
+        res.status(400).json({
+          message: "Invalid product data",
+          errors: errorMessages,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        });
+      } else {
+        res.status(400).json({
+          message: "Failed to create product",
+          error: error instanceof Error ? error.message : "Unknown error occurred"
+        });
+      }
     }
   });
 
@@ -443,14 +506,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/cart", async (req, res) => {
+  app.post("/api/cart/items", async (req, res) => {
     try {
-      const validatedData = insertCartItemSchema.parse(req.body);
-      const cartItem = await storage.addToCart(validatedData);
+      const { productId, quantity, generatorData, formBuilderData } = req.body;
+      const userId = req.body.userId || req.query.userId;
+      
+      if (!userId || !productId) {
+        return res.status(400).json({ message: "Missing userId or productId" });
+      }
+
+      // Store metadata including formBuilderData
+      const metadata: any = {};
+      if (generatorData) metadata.generatorData = generatorData;
+      if (formBuilderData) metadata.formBuilderData = formBuilderData;
+      
+      const cartItem = await storage.addToCart({
+        userId: userId as string,
+        productId,
+        quantity: quantity || 1,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined
+      } as any);
+      
       res.status(201).json(cartItem);
     } catch (error) {
       console.error("Add to cart error:", error);
-      res.status(400).json({ message: error instanceof z.ZodError ? "Invalid cart data" : "Failed to add to cart" });
+      res.status(400).json({ message: "Failed to add to cart" });
     }
   });
 
@@ -507,6 +587,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Get invite codes error:", error);
       res.status(500).json({ message: "Failed to fetch invite codes" });
     }
+  // Form Builder Generator API
+  app.post("/api/generate-formbuilder", async (req, res) => {
+    try {
+      const { productId, userId, formBuilderData } = req.body;
+
+      if (!productId || !userId || !formBuilderData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing required fields" 
+        });
+      }
+
+      // Get product details
+      const product = await storage.getProduct(productId);
+      if (!product || product.category !== "generator" || !product.formBuilderJson) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid generator product" 
+        });
+      }
+
+      // Validate form data against schema
+      const schema = product.formBuilderJson as any;
+      const validation = validateFormData(formBuilderData, schema);
+      
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          success: false, 
+          errors: validation.errors 
+        });
+      }
+
+      // Calculate dynamic price
+      const basePrice = parseFloat(product.price.toString());
+      const totalPrice = calculateDynamicPrice(formBuilderData, schema, basePrice);
+
+      // Create an order for the generation request
+      const order = await storage.createOrder({
+        userId,
+        productId,
+        quantity: 1,
+        totalAmount: totalPrice,
+        status: "processing",
+        orderData: {
+          generatorType: product.title,
+          formBuilderData,
+          fileReady: false
+        }
+      });
+
+      // Trigger webhook to external service
+      await handleGeneratorWebhook(
+        { body: { orderId: order.id, userId, productId } } as any,
+        res
+      );
+
+      console.log(`Form builder generation request created: ${order.id}`);
+
+    } catch (error) {
+      console.error("Form builder generation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to submit generation request" 
+      });
+    }
+  });
+
+  // Form Builder Generator Callback Endpoint
+  app.post("/api/webhook/generator-complete", handleGeneratorCallback);
+
+  // Validate Form Builder Data Endpoint
+  app.post("/api/validate-formbuilder", async (req, res) => {
+    try {
+      const { productId, formData } = req.body;
+
+      if (!productId || !formData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing productId or formData" 
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product || !product.formBuilderJson) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Product not found or has no form configuration" 
+        });
+      }
+
+      const validation = validateFormData(formData, product.formBuilderJson as any);
+      
+      res.json({
+        success: validation.valid,
+        errors: validation.errors
+      });
+
+    } catch (error) {
+      console.error("Form validation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to validate form data" 
+      });
+    }
+  });
+
+  // Calculate Dynamic Price Endpoint
+  app.post("/api/calculate-price", async (req, res) => {
+    try {
+      const { productId, formData } = req.body;
+
+      if (!productId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing productId" 
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Product not found" 
+        });
+      }
+
+      const basePrice = parseFloat(product.price.toString());
+      
+      if (product.formBuilderJson && formData) {
+        const totalPrice = calculateDynamicPrice(formData, product.formBuilderJson as any, basePrice);
+        res.json({
+          success: true,
+          basePrice,
+          totalPrice,
+          additionalPrice: totalPrice - basePrice
+        });
+      } else {
+        res.json({
+          success: true,
+          basePrice,
+          totalPrice: basePrice,
+          additionalPrice: 0
+        });
+      }
+
+    } catch (error) {
+      console.error("Price calculation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to calculate price" 
+      });
+    }
+  });
+
   });
 
   // MediaMarkt Generator API
@@ -519,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         productId: "prod-6", // MediaMarkt product
         quantity: 1,
-        totalAmount: "12.99",
+        totalAmount: 12.99,
         status: "processing",
         orderData: {
           generatorType: "mediamarkt-rechnung",
