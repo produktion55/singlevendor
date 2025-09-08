@@ -11,10 +11,11 @@
     "db:push": "drizzle-kit push",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:e2e": "jest --testPathPattern=e2e",
+    "test:e2e": "jest --testPathPatterns=e2e",
     "test:auth": "jest tests/e2e/auth.test.ts",
     "test:shopping": "jest tests/e2e/shopping.test.ts",
-    "test:admin": "jest tests/e2e/admin.test.ts"
+    "test:admin": "jest tests/e2e/admin.test.ts",
+    "test:formbuilder": "jest tests/e2e/formBuilder.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -66,25 +66,49 @@ export function ProductDetails() {
     // For form builder products, validate form
     if (product.formBuilderJson) {
       const formSchema = product.formBuilderJson as FormBuilderSchema;
-      const hasRequiredFields = formSchema && formSchema.sections && Array.isArray(formSchema.sections) &&
-        formSchema.sections.some((section: any) =>
-          section && section.fields && Array.isArray(section.fields) &&
-          section.fields.some((field: any) => field.required)
-        );
       
-      if (hasRequiredFields && Object.keys(formBuilderData).length === 0) {
-        toast({
-          title: "Missing Required Fields",
-          description: "Please fill in the required form fields",
-          variant: "destructive",
+      // Check if there are any required fields in the form
+      const requiredFields: string[] = [];
+      if (formSchema && formSchema.sections && Array.isArray(formSchema.sections)) {
+        formSchema.sections.forEach((section: any) => {
+          if (section && section.fields && Array.isArray(section.fields)) {
+            section.fields.forEach((field: any) => {
+              if (field.required) {
+                requiredFields.push(field.name);
+              }
+            });
+          }
         });
-        return;
       }
       
-      if (Object.keys(formErrors).length > 0) {
+      // Only validate if there are required fields
+      if (requiredFields.length > 0) {
+        // Check if required fields are filled
+        const missingFields = requiredFields.filter(fieldName => !formBuilderData[fieldName]);
+        
+        if (missingFields.length > 0) {
+          toast({
+            title: "Missing Required Fields",
+            description: "Please fill in all required form fields",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Note: formErrors is never populated in the current implementation,
+      // so we'll skip this check for now
+    }
+    // For legacy generators, validate required fields
+    else if (product.category === "generator" && product.customFields) {
+      const missingFields = product.customFields
+        .filter(field => field.required && !generatorData[field.name])
+        .map(field => field.label);
+      
+      if (missingFields.length > 0) {
         toast({
-          title: "Form Validation Error",
-          description: "Please fix the errors in the form",
+          title: "Missing Required Fields",
+          description: `Please fill in: ${missingFields.join(", ")}`,
           variant: "destructive",
         });
         return;
@@ -97,6 +121,7 @@ export function ProductDetails() {
       price: totalPrice,
       image: product.images?.[0] || "https://via.placeholder.com/300x200",
       type: product.type.replace("_", " "),
+      quantity: quantity,
       formBuilderData: product.formBuilderJson ? formBuilderData : undefined,
       generatorData: product.customFields && !product.formBuilderJson ? generatorData : undefined,
     } as any);
@@ -113,28 +138,34 @@ export function ProductDetails() {
     // For form builder products, validate form
     if (product.formBuilderJson) {
       const formSchema = product.formBuilderJson as FormBuilderSchema;
-      const hasRequiredFields = formSchema && formSchema.sections && Array.isArray(formSchema.sections) &&
-        formSchema.sections.some((section: any) =>
-          section && section.fields && Array.isArray(section.fields) &&
-          section.fields.some((field: any) => field.required)
-        );
       
-      if (hasRequiredFields && Object.keys(formBuilderData).length === 0) {
-        toast({
-          title: "Missing Required Fields",
-          description: "Please fill in the required form fields",
-          variant: "destructive",
+      // Check if there are any required fields in the form
+      const requiredFields: string[] = [];
+      if (formSchema && formSchema.sections && Array.isArray(formSchema.sections)) {
+        formSchema.sections.forEach((section: any) => {
+          if (section && section.fields && Array.isArray(section.fields)) {
+            section.fields.forEach((field: any) => {
+              if (field.required) {
+                requiredFields.push(field.name);
+              }
+            });
+          }
         });
-        return;
       }
       
-      if (Object.keys(formErrors).length > 0) {
-        toast({
-          title: "Form Validation Error",
-          description: "Please fix the errors in the form",
-          variant: "destructive",
-        });
-        return;
+      // Only validate if there are required fields
+      if (requiredFields.length > 0) {
+        // Check if required fields are filled
+        const missingFields = requiredFields.filter(fieldName => !formBuilderData[fieldName]);
+        
+        if (missingFields.length > 0) {
+          toast({
+            title: "Missing Required Fields",
+            description: "Please fill in all required form fields",
+            variant: "destructive",
+          });
+          return;
+        }
       }
     }
     // For legacy generators, validate required fields
@@ -160,7 +191,7 @@ export function ProductDetails() {
       price: totalPrice.toString(),
       image: product.images?.[0] || "https://via.placeholder.com/300x200",
       type: product.type.replace("_", " "),
-      quantity: 1,
+      quantity: quantity,
       formBuilderData: product.formBuilderJson ? formBuilderData : undefined,
       generatorData: product.customFields && !product.formBuilderJson ? generatorData : undefined
     };

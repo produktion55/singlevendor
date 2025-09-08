@@ -1,24 +1,28 @@
+/** @type {import('jest').Config} */
 export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/tests'],
-  testMatch: ['**/*.test.ts'],
-  collectCoverageFrom: [
-    'server/**/*.ts',
-    'client/src/**/*.{ts,tsx}',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
+  testMatch: [
+    '**/*.test.ts',
+    '**/*.test.js'
   ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/client/src/$1',
-    '^@shared/(.*)$': '<rootDir>/shared/$1',
+    '^@shared/(.*)$': '<rootDir>/shared/$1'
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-  testTimeout: 30000,
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: 'tsconfig.test.json',
-      isolatedModules: true,
-    }],
+      tsconfig: 'tsconfig.test.json'
+    }]
   },
+  testTimeout: 30000,
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  coverageDirectory: 'coverage',
+  collectCoverageFrom: [
+    'client/src/**/*.{ts,tsx}',
+    'server/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/vendor/**'
+  ]
 };

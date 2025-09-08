@@ -65,6 +65,7 @@ export async function stopServer(): Promise<void> {
 export async function initBrowser(): Promise<Browser> {
   browser = await puppeteer.launch({
     headless: false, // Always run in headful mode
+    slowMo: 250, // Slow down actions for visibility
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     defaultViewport: {
       width: 1280,
