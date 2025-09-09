@@ -39,8 +39,8 @@ export function AdminPanel() {
   return (
     <div className="max-w-full mx-auto px-3 md:px-6">
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Panel</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Admin Panel</h1>
+        <p className="text-lg text-muted-foreground">
           Manage products, sales, and platform settings
         </p>
       </div>
@@ -54,9 +54,9 @@ export function AdminPanel() {
                 <TrendingUp className="w-6 h-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Sales</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  ${mockAdminStats.totalSales.toLocaleString()}
+                <p className="text-sm text-muted-foreground">Total Sales</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {mockAdminStats.totalSales.toLocaleString()}€
                 </p>
               </div>
             </div>
@@ -70,8 +70,8 @@ export function AdminPanel() {
                 <Package className="w-6 h-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active Products</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-sm text-muted-foreground">Active Products</p>
+                <p className="text-2xl font-bold text-foreground">
                   {mockAdminStats.activeProducts}
                 </p>
               </div>
@@ -86,8 +86,8 @@ export function AdminPanel() {
                 <Users className="w-6 h-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-sm text-muted-foreground">Total Users</p>
+                <p className="text-2xl font-bold text-foreground">
                   {mockAdminStats.totalUsers.toLocaleString()}
                 </p>
               </div>
@@ -102,8 +102,8 @@ export function AdminPanel() {
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Pending Issues</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-sm text-muted-foreground">Pending Issues</p>
+                <p className="text-2xl font-bold text-foreground">
                   {mockAdminStats.pendingIssues}
                 </p>
               </div>
@@ -114,10 +114,10 @@ export function AdminPanel() {
 
       {/* Product Management Table */}
       <Card>
-        <CardHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <CardHeader className="px-6 py-4 border-b border-border">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">
-              <Link href="/admin/products" className="hover:text-blue-600">
+            <CardTitle className="text-lg font-semibold text-foreground">
+              <Link href="/admin/products" className="hover:text-primary">
                 Product Management
               </Link>
             </CardTitle>
@@ -154,22 +154,22 @@ export function AdminPanel() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-foreground">
                             {product.title}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-sm text-muted-foreground">
                             {product.category}
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm text-gray-900 dark:text-white">
+                    <TableCell className="text-sm text-foreground">
                       {getProductTypeDisplay(product.type)}
                     </TableCell>
-                    <TableCell className="text-sm text-gray-900 dark:text-white">
-                      ${product.price}
+                    <TableCell className="text-sm text-foreground">
+                      {product.price}€
                     </TableCell>
-                    <TableCell className="text-sm text-gray-900 dark:text-white">
+                    <TableCell className="text-sm text-foreground">
                       {product.stock || "∞"}
                     </TableCell>
                     <TableCell>

@@ -1,5 +1,6 @@
 import { db } from "../server/db";
 import { users, inviteCodes, products } from "../shared/schema";
+import bcrypt from "bcryptjs";
 
 async function seed() {
   console.log("Seeding database...");
@@ -14,7 +15,7 @@ async function seed() {
   // Create admin user
   const [adminUser] = await db.insert(users).values({
     username: "admin",
-    password: "admin123", // In production, this should be hashed
+    password: await bcrypt.hash("admin123", 10),
     email: "admin@example.com",
     publicName: "Administrator",
     balance: 1000.00,
@@ -26,7 +27,7 @@ async function seed() {
   // Create regular user  
   const [regularUser] = await db.insert(users).values({
     username: "testuser",
-    password: "user123", // In production, this should be hashed
+    password: await bcrypt.hash("user123", 10),
     email: "user@example.com",
     publicName: "Test User",
     balance: 100.00,

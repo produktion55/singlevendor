@@ -13,9 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type Product } from "@shared/schema";
 import type { FormBuilderSchema } from "@shared/types/formBuilder";
+import { useI18n } from "@/i18n";
 
 export function Checkout() {
   const { items, total, clearCart } = useCart();
+  const { t } = useI18n();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -192,7 +194,7 @@ export function Checkout() {
             <CreditCard className="w-12 h-12 text-gray-400" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Your cart is empty
+            {t("cartEmpty")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Add some products to your cart to continue with checkout
@@ -200,7 +202,7 @@ export function Checkout() {
         </div>
         <Link href="/shop">
           <Button className="bg-blue-600 hover:bg-blue-700">
-            Continue Shopping
+            {t("backToShop")}
           </Button>
         </Link>
       </div>
@@ -213,12 +215,12 @@ export function Checkout() {
         <Link href="/shop">
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Shop
+            {t("backToShop")}
           </Button>
         </Link>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">Checkout</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("checkoutTitle")}</h1>
         <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
-          Review your order and complete your purchase
+          {t("checkoutSubtitle")}
         </p>
       </div>
 
@@ -306,7 +308,7 @@ export function Checkout() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Wallet className="w-5 h-5" />
-                <span>Wallet Balance</span>
+                <span>{t("walletBalance")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -316,7 +318,7 @@ export function Checkout() {
                 </div>
                 {hasInsufficientFunds && (
                   <div className="text-xs md:text-sm text-red-600 mb-3 p-2 bg-red-50 dark:bg-red-900/20 rounded">
-                    Insufficient funds. Need {(checkoutTotal - userBalance).toFixed(2)}€ more.
+                    {t("insufficientFundsNeedMore", { amount: (checkoutTotal - userBalance).toFixed(2) })}
                   </div>
                 )}
                 <Button 
@@ -325,7 +327,7 @@ export function Checkout() {
                   className="w-full"
                   onClick={() => window.location.href = "/profile?tab=balance"}
                 >
-                  Add Funds
+                  {t("addFunds")}
                 </Button>
               </div>
             </CardContent>
@@ -334,20 +336,20 @@ export function Checkout() {
           {/* Order Total */}
           <Card>
             <CardHeader>
-              <CardTitle>Order Total</CardTitle>
+              <CardTitle>{t("orderTotal")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("subtotal")}</span>
                 <span className="font-medium">{checkoutTotal.toFixed(2)}€</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Processing Fee</span>
+                <span className="text-gray-600 dark:text-gray-400">{t("processingFee")}</span>
                 <span className="font-medium">0.00€</span>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">
-                <span>Total</span>
+                <span>{t("total")}</span>
                 <span>{checkoutTotal.toFixed(2)}€</span>
               </div>
             </CardContent>
@@ -362,20 +364,20 @@ export function Checkout() {
                 className="w-full bg-green-600 hover:bg-green-700 text-white h-12 md:h-10 text-base md:text-sm"
               >
                 {isProcessing ? (
-                  "Processing..."
+                  t("processing")
                 ) : hasInsufficientFunds ? (
-                  "Insufficient Funds"
+                  t("insufficientFunds")
                 ) : (
                   <>
                     <Lock className="w-4 h-4 mr-2" />
-                    Complete Purchase
+                    {t("completePurchase")}
                   </>
                 )}
               </Button>
               
               <div className="flex items-center justify-center mt-3 text-xs text-gray-500">
                 <Lock className="w-3 h-3 mr-1" />
-                <span>Secure checkout • Instant delivery</span>
+                <span>{t("secureCheckoutTagline")}</span>
               </div>
             </CardContent>
           </Card>

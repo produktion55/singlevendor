@@ -85,6 +85,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }) => {
       if (!user?.id) throw new Error("User not logged in");
       const response = await apiRequest("POST", "/api/cart/items", {
+        userId: user.id,
         productId: item.productId,
         quantity: item.quantity || 1,
         generatorData: item.generatorData,

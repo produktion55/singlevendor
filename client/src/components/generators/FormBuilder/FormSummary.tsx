@@ -59,8 +59,7 @@ export default function FormSummary({
         const optionIndex = selectField.options?.indexOf(value);
         if (optionIndex >= 0 && selectField.optionPrices?.[optionIndex]) {
           const price = selectField.optionPrices[optionIndex];
-          const priceType = selectField.optionPriceType || 'fixed';
-          formattedValue = `${value} (+$${price.toFixed(2)}${priceType === 'percentage' ? '%' : ''})`;
+          formattedValue = `${value} (+${price.toFixed(2)}€)`;
         }
       } else if (field.type === 'date' && value) {
         formattedValue = new Date(value as string).toLocaleDateString();

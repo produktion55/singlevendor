@@ -121,23 +121,22 @@ export default function FieldRenderer({
             <SelectContent>
               {selectField.options?.map((option: string, index: number) => {
                 const price = selectField.optionPrices?.[index];
-                const priceType = selectField.optionPriceType || 'fixed';
                 return (
                   <SelectItem key={`${option}-${index}`} value={option}>
                     <div className="flex justify-between items-center w-full">
                       <span>{option}</span>
                       {price !== undefined && price !== null && price !== 0 && (
                         <span className="ml-2 text-sm text-muted-foreground">
-                          {price > 0 ? '+' : ''}{priceType === 'percentage' ? `${price}%` : `$${price.toFixed(2)}`}
+                          {price > 0 ? '+' : ''}{Math.abs(price).toFixed(2)}€
                         </span>
                       )}
                     </div>
                   </SelectItem>
                 );
               })}
-            </SelectContent>
-          </Select>
-        );
+          </SelectContent>
+        </Select>
+      );
       
       case 'date':
         const dateField = field as any; // Type assertion for date-specific properties
@@ -201,10 +200,7 @@ export default function FieldRenderer({
       if (selectedIndex >= 0 && fieldWithOptions.optionPrices?.[selectedIndex] !== undefined) {
         const price = fieldWithOptions.optionPrices[selectedIndex];
         if (price !== 0) {
-          return {
-            amount: price,
-            type: fieldWithOptions.optionPriceType || 'fixed'
-          };
+          return { amount: price };
         }
       }
     }
@@ -222,7 +218,7 @@ export default function FieldRenderer({
         )}
         {pricing && (
           <span className="ml-auto text-sm text-muted-foreground">
-            Current: {pricing.amount > 0 ? '+' : ''}{pricing.type === 'percentage' ? `${pricing.amount}%` : `$${pricing.amount.toFixed(2)}`}
+            Current: {pricing.amount > 0 ? '+' : ''}{Math.abs(pricing.amount).toFixed(2)}€
           </span>
         )}
       </Label>

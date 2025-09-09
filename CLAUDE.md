@@ -16,7 +16,7 @@ npm run start         # Run production server (NODE_ENV=production)
 npm run check         # Run TypeScript type checking (tsc)
 
 # Database
-npm run db:push       # Push schema changes to PostgreSQL database (drizzle-kit push)
+npm run db:push       # Push schema changes to SQLite database (drizzle-kit push)
 ```
 
 ## Architecture Overview
@@ -24,7 +24,7 @@ npm run db:push       # Push schema changes to PostgreSQL database (drizzle-kit 
 ### Tech Stack
 - **Frontend**: React 18 + TypeScript with Vite, shadcn/ui components, Radix UI primitives, Tailwind CSS
 - **Backend**: Express.js + TypeScript on Node.js
-- **Database**: PostgreSQL with Neon serverless (using Drizzle ORM)
+- **Database**: SQLite (using Drizzle ORM)
 - **State Management**: TanStack Query for server state, React Hook Form for forms
 - **Routing**: Wouter for client-side routing
 - **Validation**: Zod schemas shared between frontend and backend
@@ -42,7 +42,7 @@ SpendSavvy/
 ├── server/              # Express backend
 │   ├── index.ts        # Server entry point
 │   ├── routes.ts       # API route definitions
-│   ├── db.ts           # Neon PostgreSQL connection
+│   ├── db.ts           # SQLite database connection
 │   └── storage.ts      # Database abstraction layer
 ├── shared/              # Shared code between client and server
 │   └── schema.ts       # Drizzle ORM schema and Zod validation
@@ -53,7 +53,7 @@ SpendSavvy/
 
 1. **Single Page Application (SPA)** with RESTful API backend
 2. **Session-based Authentication** using express-session with MemoryStore
-3. **JSON Data Storage** - Complex data types (arrays, objects) are stored as JSON in PostgreSQL jsonb columns
+3. **JSON Data Storage** - Complex data types (arrays, objects) are stored as JSON in SQLite columns
 4. **Type-safe Database Access** - Drizzle ORM with Zod validation ensures type safety from database to API
 5. **Path Aliases** - Use `@/` for client/src imports and `@shared/` for shared code
 
@@ -113,7 +113,7 @@ Preferred communication style: Simple, everyday language.
 - **Component Structure**: Modular component architecture with reusable UI components
 
 ## Backend Architecture
-- **Runtime**: Node.js with Express.js framework
+- **Runtime**: Node.js 20+ with Express.js framework
 - **Language**: TypeScript with ES modules
 - **API Design**: RESTful API with JSON responses
 - **Error Handling**: Centralized error handling middleware
@@ -121,7 +121,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Database Layer
 - **ORM**: Drizzle ORM for type-safe database operations
-- **Database**: PostgreSQL with Neon serverless driver
+- **Database**: SQLite
 - **Schema**: Centralized schema definitions in shared directory
 - **Migrations**: Drizzle-kit for database migrations and schema management
 - **Validation**: Zod for runtime type validation and schema parsing
@@ -154,9 +154,9 @@ Preferred communication style: Simple, everyday language.
 - **Vite**: Build tool and development server
 
 ## Database & ORM
-- **PostgreSQL**: Primary database (configured for Neon serverless)
+- **SQLite**: Primary database (file-based)
 - **Drizzle ORM**: Database toolkit with type safety
-- **@neondatabase/serverless**: Serverless PostgreSQL driver
+- **better-sqlite3**: SQLite driver
 
 ## UI Components
 - **Radix UI**: Headless UI component primitives

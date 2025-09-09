@@ -1,10 +1,12 @@
 import React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "./ThemeProvider";
+import { useI18n } from "@/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function Footer() {
   const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
 
   const themeOptions = [
     { value: "light", label: "Light", color: "bg-white border-2 border-gray-300" },
@@ -14,29 +16,29 @@ export function Footer() {
   ];
 
   return (
-    <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-16">
+    <footer className="bg-card border-t border-border mt-16 text-foreground">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* First Section */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">SecureMarket</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Premium digital products and services marketplace
+              <h3 className="text-lg font-bold text-foreground">SecureMarket</h3>
+              <p className="text-sm text-muted-foreground">
+                {t("marketSubtitle")}
               </p>
             </div>
             <div className="space-y-2">
               <a 
                 href="#contact" 
-                className="block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                className="block text-sm text-muted-foreground hover:text-primary"
               >
-                Contact
+                {t("contact")}
               </a>
               <a 
                 href="#faq" 
-                className="block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                className="block text-sm text-muted-foreground hover:text-primary"
               >
-                FAQ
+                {t("faq")}
               </a>
             </div>
           </div>
@@ -48,25 +50,17 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mt-8">
+        <div className="border-t border-border pt-8 mt-8">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             {/* Language Toggle */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Language:</span>
-              <Select defaultValue="en">
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                </SelectContent>
-              </Select>
+              <span className="text-sm text-muted-foreground">{t("language")}</span>
+              <LanguageToggle />
             </div>
 
             {/* Theme Toggle */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Theme:</span>
+              <span className="text-sm text-muted-foreground">{t("theme")}</span>
               <div className="flex space-x-1">
                 {themeOptions.map((option) => (
                   <Button

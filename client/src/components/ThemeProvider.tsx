@@ -31,8 +31,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.remove("dark", "oled", "colorful");
     
     // Add current theme class
-    if (theme !== "light") {
-      document.documentElement.classList.add(theme);
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (theme === "oled") {
+      // OLED should also enable dark mode styles so existing `dark:` classes apply
+      document.documentElement.classList.add("oled");
+      document.documentElement.classList.add("dark");
+    } else if (theme === "colorful") {
+      document.documentElement.classList.add("colorful");
     }
   }, [theme]);
 

@@ -6,6 +6,7 @@ import { z } from "zod";
 import * as speakeasy from "speakeasy";
 import * as QRCode from "qrcode";
 import { handleGeneratorWebhook, handleGeneratorCallback, validateFormData, calculateDynamicPrice } from "./generatorWebhook";
+import bcrypt from "bcryptjs";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -28,9 +29,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate user data
       const validatedData = insertUserSchema.parse({ ...userData, inviteCode });
-      
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+
       // Create user
-      const user = await storage.createUser(validatedData);
+      const user = await storage.createUser({ ...validatedData, password: hashedPassword });
       res.status(201).json({ user: { id: user.id, username: user.username } });
     } catch (error) {
       console.error("Registration error:", error);
@@ -47,8 +51,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // In a real app, you'd verify the hashed password
-      // For now, we'll just return success
+      const passwordOk = await bcrypt.compare(password, user.password);
+      if (!passwordOk) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
       res.json({ 
         user: { 
           id: user.id, 

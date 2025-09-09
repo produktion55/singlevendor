@@ -28,10 +28,6 @@ export interface Section {
  */
 export type FieldType = 'text' | 'select' | 'textarea' | 'date' | 'number' | 'email';
 
-/**
- * Option pricing type for select fields
- */
-export type OptionPriceType = 'fixed' | 'percentage';
 
 /**
  * Conditional logic for field visibility
@@ -55,13 +51,6 @@ export interface FieldValidation {
   email?: boolean;  // For email validation
 }
 
-/**
- * Option pricing configuration for select fields
- */
-export interface OptionPricing {
-  prices: number[];
-  type: OptionPriceType;
-}
 
 /**
  * Base field interface with common properties
@@ -102,7 +91,6 @@ export interface TextField extends BaseField {
   // Text-specific validation can be at field level or in validation object
   options?: string[];  // Support for autocomplete/suggestions (future enhancement)
   optionPrices?: number[];  // For compatibility with dynamic forms
-  optionPriceType?: OptionPriceType;
 }
 
 /**
@@ -151,7 +139,6 @@ export interface SelectField extends BaseField {
   type: 'select';
   options: string[];
   optionPrices?: number[];
-  optionPriceType?: OptionPriceType;
   multiple?: boolean;
   defaultValue?: string | string[];
 }
@@ -182,7 +169,6 @@ export interface FormPricingCalculation {
     fieldName: string;
     label: string;
     charge: number;
-    type: 'fixed' | 'percentage';
   }>;
   totalPrice: number;
 }

@@ -15,6 +15,7 @@ import { MediaMarktGenerator } from "@/components/generators/MediaMarktGenerator
 import { FormRenderer } from "@/components/generators/FormBuilder";
 import { type Product } from "@shared/schema";
 import type { FormBuilderSchema, FormSubmissionData } from "@shared/types/formBuilder";
+import { useI18n } from "@/i18n";
 
 interface CustomField {
   name: string;
@@ -31,6 +32,7 @@ export function ProductDetails() {
   const { addItem } = useCart();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   // Dynamic generator form data based on custom fields
   const [generatorData, setGeneratorData] = useState<Record<string, any>>({});
@@ -310,7 +312,7 @@ export function ProductDetails() {
       <div className="max-w-full mx-auto px-3 md:px-6 text-center py-12">
         <p className="text-gray-500">Product not found.</p>
         <Link href="/shop">
-          <Button className="mt-4">Back to Shop</Button>
+          <Button className="mt-4">{t("backToShop")}</Button>
         </Link>
       </div>
     );
@@ -325,7 +327,7 @@ export function ProductDetails() {
             <Link href="/generators">
               <Button variant="outline" className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Generators
+                {t("backToGenerators")}
               </Button>
             </Link>
           </div>
@@ -340,7 +342,7 @@ export function ProductDetails() {
       <Link href="/shop">
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Shop
+          {t("backToShop")}
         </Button>
       </Link>
 <div className={isFullWidthForm ? "space-y-8" : "grid lg:grid-cols-2 gap-12"}>
@@ -389,14 +391,14 @@ export function ProductDetails() {
                 </Badge>
               ))}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl font-bold text-foreground mb-4">
               {product.title}
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-lg text-muted-foreground mb-6">
               {product.description}
             </p>
             <div className="flex items-baseline space-x-2 mb-6">
-              <span className="text-3xl font-bold text-gray-900 dark:text-white">
+              <span className="text-3xl font-bold text-foreground">
                 {totalPrice.toFixed(2)}€
               </span>
               {dynamicPrice > 0 && (
@@ -434,14 +436,14 @@ export function ProductDetails() {
 
           {/* Legacy Dynamic Generator Form Fields */}
           {hasLegacyCustomFields && (
-            <Card>
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  {product.title} Configuration
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Please fill in the required information for your custom {product.title.toLowerCase()}.
-                </p>
+                <Card>
+                  <CardContent className="p-6 space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      {product.title} {t("configuration")}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {t("configurationHelp", { product: product.title.toLowerCase() })}
+                    </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {product.customFields!.map(field => renderCustomField(field))}
@@ -455,7 +457,7 @@ export function ProductDetails() {
             <CardContent className="p-6">
               {!isGenerator && (
                 <div className="flex items-center space-x-4 mb-6">
-                  <Label htmlFor="quantity">Quantity:</Label>
+                      <Label htmlFor="quantity">{t("quantity")}</Label>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -475,38 +477,38 @@ export function ProductDetails() {
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
-                  {product.maxPerUser && (
-                    <span className="text-sm text-gray-500">
-                      Max {product.maxPerUser} per user
-                    </span>
-                  )}
+                      {product.maxPerUser && (
+                        <span className="text-sm text-gray-500">
+                          {t("maxPerUser", { count: product.maxPerUser })}
+                        </span>
+                      )}
                 </div>
               )}
 
               <div className="flex space-x-4">
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={!hasStock}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Add to Cart
-                </Button>
-                <Button
-                  onClick={handleBuyNow}
-                  disabled={!hasStock}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  Buy Now
-                </Button>
-              </div>
+                    <Button
+                      onClick={handleAddToCart}
+                      disabled={!hasStock}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      {t("addToCart")}
+                    </Button>
+                    <Button
+                      onClick={handleBuyNow}
+                      disabled={!hasStock}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    >
+                      {t("buyNow")}
+                    </Button>
+                  </div>
 
-              {!hasStock && (
-                <p className="text-red-600 text-sm mt-2 text-center">
-                  This item is currently out of stock
-                </p>
-              )}
+                  {!hasStock && (
+                    <p className="text-red-600 text-sm mt-2 text-center">
+                      {t("outOfStock")}
+                    </p>
+                  )}
             </CardContent>
           </Card>
 
@@ -514,26 +516,26 @@ export function ProductDetails() {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Product Information
+                {t("productInformation")}
               </h3>
               <dl className="space-y-3">
                 <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Type:</dt>
+                  <dt className="text-gray-600 dark:text-gray-400">{t("type")}</dt>
                   <dd className="font-medium">{product.type.replace("_", " ")}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Category:</dt>
+                  <dt className="text-gray-600 dark:text-gray-400">{t("category")}</dt>
                   <dd className="font-medium">{product.category}</dd>
                 </div>
                 {product.subcategory && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-600 dark:text-gray-400">Subcategory:</dt>
+                    <dt className="text-gray-600 dark:text-gray-400">{t("subcategory")}</dt>
                     <dd className="font-medium">{product.subcategory}</dd>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-gray-600 dark:text-gray-400">Delivery:</dt>
-                  <dd className="font-medium">Instant Digital Download</dd>
+                  <dt className="text-gray-600 dark:text-gray-400">{t("delivery")}</dt>
+                  <dd className="font-medium">{t("instantDownload")}</dd>
                 </div>
               </dl>
             </CardContent>
@@ -545,7 +547,7 @@ export function ProductDetails() {
             {product.formBuilderJson && (
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     {product.title} Configuration
                   </h3>
                   <FormRenderer
@@ -655,10 +657,10 @@ export function ProductDetails() {
                 <Card>
                   <CardContent className="p-6 space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      {product.title} Configuration
+                      {product.title} {t("configuration")}
                     </h3>
                     <p className="text-sm text-gray-500 mb-4">
-                      Please fill in the required information for your custom {product.title.toLowerCase()}.
+                      {t("configurationHelp", { product: product.title.toLowerCase() })}
                     </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -673,7 +675,7 @@ export function ProductDetails() {
                 <CardContent className="p-6">
                   {!isGenerator && (
                     <div className="flex items-center space-x-4 mb-6">
-                      <Label htmlFor="quantity">Quantity:</Label>
+                      <Label htmlFor="quantity">{t("quantity")}</Label>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
@@ -695,7 +697,7 @@ export function ProductDetails() {
                       </div>
                       {product.maxPerUser && (
                         <span className="text-sm text-gray-500">
-                          Max {product.maxPerUser} per user
+                          {t("maxPerUser", { count: product.maxPerUser })}
                         </span>
                       )}
                     </div>
@@ -709,53 +711,53 @@ export function ProductDetails() {
                       className="flex-1"
                     >
                       <ShoppingCart className="w-4 h-4 mr-2" />
-                      Add to Cart
+                      {t("addToCart")}
                     </Button>
                     <Button
                       onClick={handleBuyNow}
                       disabled={!hasStock}
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
                     >
-                      Buy Now
+                      {t("buyNow")}
                     </Button>
                   </div>
 
                   {!hasStock && (
                     <p className="text-red-600 text-sm mt-2 text-center">
-                      This item is currently out of stock
+                      {t("outOfStock")}
                     </p>
                   )}
                 </CardContent>
               </Card>
 
               {/* Product Info */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Product Information
-                  </h3>
-                  <dl className="space-y-3">
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">Type:</dt>
-                      <dd className="font-medium">{product.type.replace("_", " ")}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">Category:</dt>
-                      <dd className="font-medium">{product.category}</dd>
-                    </div>
-                    {product.subcategory && (
-                      <div className="flex justify-between">
-                        <dt className="text-gray-600 dark:text-gray-400">Subcategory:</dt>
-                        <dd className="font-medium">{product.subcategory}</dd>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600 dark:text-gray-400">Delivery:</dt>
-                      <dd className="font-medium">Instant Digital Download</dd>
-                    </div>
-                  </dl>
-                </CardContent>
-              </Card>
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                {t("productInformation")}
+              </h3>
+              <dl className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{t("type")}</dt>
+                  <dd className="font-medium text-foreground">{product.type.replace("_", " ")}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{t("category")}</dt>
+                  <dd className="font-medium text-foreground">{product.category}</dd>
+                </div>
+                {product.subcategory && (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">{t("subcategory")}</dt>
+                    <dd className="font-medium text-foreground">{product.subcategory}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">{t("delivery")}</dt>
+                  <dd className="font-medium text-foreground">{t("instantDownload")}</dd>
+                </div>
+              </dl>
+            </CardContent>
+                </Card>
             </div>
           </>
         )}

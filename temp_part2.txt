@@ -1,0 +1,707 @@
+        token: token,
+        window: 2
+      });
+      
+      if (verified) {
+        // Enable TOTP for the user
+        await storage.updateUser(userId, { totpEnabled: true });
+        res.json({ success: true });
+      } else {
+        res.status(400).json({ message: "Invalid token" });
+      }
+    } catch (error) {
+      console.error("TOTP verify error:", error);
+      res.status(500).json({ message: "Failed to verify TOTP" });
+    }
+  });
+  
+  app.post("/api/auth/totp/disable", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID required" });
+      }
+      
+      await storage.updateUser(userId, { 
+        totpSecret: null, 
+        totpEnabled: false 
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("TOTP disable error:", error);
+      res.status(500).json({ message: "Failed to disable TOTP" });
+    }
+  });
+
+  // Product routes
+  app.get("/api/products", async (req, res) => {
+    try {
+      const { category } = req.query;
+      
+      let products;
+      if (category && typeof category === 'string') {
+        products = await storage.getProductsByCategory(category);
+      } else {
+        products = await storage.getAllProducts();
+      }
+      
+      // Parse formBuilderJson if it's a string
+      const productsWithParsedJson = products.map(product => {
+        if (product.formBuilderJson && typeof product.formBuilderJson === 'string') {
+          try {
+            return {
+              ...product,
+              formBuilderJson: JSON.parse(product.formBuilderJson)
+            };
+          } catch (e) {
+            console.error('Failed to parse formBuilderJson for product', product.id, e);
+            return product;
+          }
+        }
+        return product;
+      });
+      
+      res.json(productsWithParsedJson);
+    } catch (error) {
+      console.error("Get products error:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const product = await storage.getProduct(req.params.id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Parse formBuilderJson if it's a string
+      let productWithParsedJson = product;
+      if (product.formBuilderJson && typeof product.formBuilderJson === 'string') {
+        try {
+          productWithParsedJson = {
+            ...product,
+            formBuilderJson: JSON.parse(product.formBuilderJson)
+          };
+        } catch (e) {
+          console.error('Failed to parse formBuilderJson for product', product.id, e);
+        }
+      }
+      
+      res.json(productWithParsedJson);
+    } catch (error) {
+      console.error("Get product error:", error);
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.post("/api/products", async (req, res) => {
+    try {
+      // Parse formBuilderJson if it's a string
+      const productData = { ...req.body };
+      if (productData.formBuilderJson && typeof productData.formBuilderJson === 'string') {
+        try {
+          productData.formBuilderJson = JSON.parse(productData.formBuilderJson);
+        } catch (jsonError) {
+          return res.status(400).json({
+            message: "Invalid form builder JSON",
+            error: "The form builder JSON is not valid JSON format",
+            details: jsonError instanceof Error ? jsonError.message : "Unknown JSON parse error"
+          });
+        }
+      }
+
+      const validatedData = insertProductSchema.parse(productData);
+      const product = await storage.createProduct(validatedData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Create product error:", error);
+      
+      // Provide more detailed error messages
+      if (error instanceof z.ZodError) {
+        const errorMessages = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }));
+        
+        res.status(400).json({
+          message: "Invalid product data",
+          errors: errorMessages,
+          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+        });
+      } else {
+        res.status(400).json({
+          message: "Failed to create product",
+          error: error instanceof Error ? error.message : "Unknown error occurred"
+        });
+      }
+    }
+  });
+
+  app.put("/api/products/:id", async (req, res) => {
+    try {
+      const updatedProduct = await storage.updateProduct(req.params.id, req.body);
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Update product error:", error);
+      res.status(400).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteProduct(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Delete product error:", error);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Order routes
+  app.get("/api/orders/user/:userId", async (req, res) => {
+    try {
+      const orders = await storage.getOrdersByUserId(req.params.userId);
+      res.json(orders);
+    } catch (error) {
+      console.error("Get orders error:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const validatedData = insertOrderSchema.parse(req.body);
+      const order = await storage.createOrder(validatedData);
+      
+      // Create notification for order creation
+      await storage.createNotification({
+        userId: order.userId,
+        title: "Order Created",
+        message: `Your order #${order.id.slice(-8)} has been placed successfully`,
+        type: "order",
+        orderId: order.id
+      });
+      
+      res.status(201).json(order);
+    } catch (error) {
+      console.error("Create order error:", error);
+      res.status(400).json({ message: error instanceof z.ZodError ? "Invalid order data" : "Failed to create order" });
+    }
+  });
+
+  app.put("/api/orders/:id", async (req, res) => {
+    try {
+      // Get original order to compare status change
+      const originalOrder = await storage.getOrder(req.params.id);
+      
+      // Convert deliveredAt string to Date if present
+      const updateData = { ...req.body };
+      if (updateData.deliveredAt && typeof updateData.deliveredAt === 'string') {
+        updateData.deliveredAt = new Date(updateData.deliveredAt);
+      }
+      
+      const updatedOrder = await storage.updateOrder(req.params.id, updateData);
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      
+      // Create notification for status change
+      if (originalOrder && originalOrder.status !== updatedOrder.status) {
+        let notificationMessage = "";
+        switch (updatedOrder.status) {
+          case "delivered":
+            notificationMessage = `Your order #${updatedOrder.id.slice(-8)} has been delivered!`;
+            break;
+          case "processing":
+            notificationMessage = `Your order #${updatedOrder.id.slice(-8)} is being processed`;
+            break;
+          case "in_resolution":
+            notificationMessage = `Your order #${updatedOrder.id.slice(-8)} is in resolution`;
+            break;
+          case "refunded":
+            notificationMessage = `Your order #${updatedOrder.id.slice(-8)} has been refunded`;
+            break;
+        }
+        
+        if (notificationMessage) {
+          await storage.createNotification({
+            userId: updatedOrder.userId,
+            title: "Order Status Updated",
+            message: notificationMessage,
+            type: "order",
+            orderId: updatedOrder.id
+          });
+        }
+      }
+      
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Update order error:", error);
+      res.status(400).json({ message: "Failed to update order" });
+    }
+  });
+
+  // Transaction routes
+  app.get("/api/transactions/user/:userId", async (req, res) => {
+    try {
+      const transactions = await storage.getTransactionsByUserId(req.params.userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Get transactions error:", error);
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  app.post("/api/transactions", async (req, res) => {
+    try {
+      const validatedData = insertTransactionSchema.parse(req.body);
+      const transaction = await storage.createTransaction(validatedData);
+      
+      // For purchase transactions, deduct from user balance
+      if (validatedData.type === "purchase" && validatedData.amount < 0) {
+        const user = await storage.getUser(validatedData.userId);
+        if (user && user.balance) {
+          const currentBalance = parseFloat(user.balance);
+          const transactionAmount = Math.abs(validatedData.amount);
+          const newBalance = Math.max(0, currentBalance - transactionAmount);
+          
+          await storage.updateUser(validatedData.userId, {
+            balance: newBalance.toFixed(2)
+          });
+        }
+      }
+      
+      // Create notification for transaction
+      const isDeposit = parseFloat(transaction.amount) > 0;
+      await storage.createNotification({
+        userId: transaction.userId,
+        title: isDeposit ? "Funds Added" : "Purchase Completed", 
+        message: isDeposit 
+          ? `€${Math.abs(parseFloat(transaction.amount)).toFixed(2)} has been added to your wallet`
+          : `Payment of €${Math.abs(parseFloat(transaction.amount)).toFixed(2)} processed successfully`,
+        type: "transaction",
+        transactionId: transaction.id
+      });
+      
+      res.status(201).json(transaction);
+    } catch (error) {
+      console.error("Create transaction error:", error);
+      res.status(400).json({ message: error instanceof z.ZodError ? "Invalid transaction data" : "Failed to create transaction" });
+    }
+  });
+
+  // Cart routes
+  app.get("/api/cart/user/:userId", async (req, res) => {
+    try {
+      const cartItems = await storage.getCartByUserId(req.params.userId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Get cart error:", error);
+      res.status(500).json({ message: "Failed to fetch cart" });
+    }
+  });
+
+  app.post("/api/cart/items", async (req, res) => {
+    try {
+      const { productId, quantity, generatorData, formBuilderData } = req.body;
+      const userId = req.body.userId || req.query.userId;
+      
+      if (!userId || !productId) {
+        return res.status(400).json({ message: "Missing userId or productId" });
+      }
+
+      // Store metadata including formBuilderData
+      const metadata: any = {};
+      if (generatorData) metadata.generatorData = generatorData;
+      if (formBuilderData) metadata.formBuilderData = formBuilderData;
+      
+      const cartItem = await storage.addToCart({
+        userId: userId as string,
+        productId,
+        quantity: quantity || 1,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined
+      } as any);
+      
+      res.status(201).json(cartItem);
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      res.status(400).json({ message: "Failed to add to cart" });
+    }
+  });
+
+  app.put("/api/cart/:id", async (req, res) => {
+    try {
+      const { quantity } = req.body;
+      if (typeof quantity !== "number" || quantity < 0) {
+        return res.status(400).json({ message: "Invalid quantity" });
+      }
+
+      if (quantity === 0) {
+        const removed = await storage.removeFromCart(req.params.id);
+        return res.json({ success: removed });
+      }
+
+      const updatedItem = await storage.updateCartItem(req.params.id, quantity);
+      if (!updatedItem) {
+        return res.status(404).json({ message: "Cart item not found" });
+      }
+      
+      res.json(updatedItem);
+    } catch (error) {
+      console.error("Update cart item error:", error);
+      res.status(400).json({ message: "Failed to update cart item" });
+    }
+  });
+
+  app.delete("/api/cart/:id", async (req, res) => {
+    try {
+      const removed = await storage.removeFromCart(req.params.id);
+      res.json({ success: removed });
+    } catch (error) {
+      console.error("Remove cart item error:", error);
+      res.status(400).json({ message: "Failed to remove cart item" });
+    }
+  });
+
+  app.delete("/api/cart/user/:userId", async (req, res) => {
+    try {
+      const cleared = await storage.clearCart(req.params.userId);
+      res.json({ success: cleared });
+    } catch (error) {
+      console.error("Clear cart error:", error);
+      res.status(400).json({ message: "Failed to clear cart" });
+    }
+  });
+
+  // Invite codes
+  app.get("/api/invite-codes", async (req, res) => {
+    try {
+      const codes = await storage.getAllInviteCodes();
+      res.json(codes);
+    } catch (error) {
+      console.error("Get invite codes error:", error);
+      res.status(500).json({ message: "Failed to fetch invite codes" });
+    }
+  // Form Builder Generator API
+  app.post("/api/generate-formbuilder", async (req, res) => {
+    try {
+      const { productId, userId, formBuilderData } = req.body;
+
+      if (!productId || !userId || !formBuilderData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing required fields" 
+        });
+      }
+
+      // Get product details
+      const product = await storage.getProduct(productId);
+      if (!product || product.category !== "generator" || !product.formBuilderJson) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Invalid generator product" 
+        });
+      }
+
+      // Validate form data against schema
+      const schema = product.formBuilderJson as any;
+      const validation = validateFormData(formBuilderData, schema);
+      
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          success: false, 
+          errors: validation.errors 
+        });
+      }
+
+      // Calculate dynamic price
+      const basePrice = parseFloat(product.price.toString());
+      const totalPrice = calculateDynamicPrice(formBuilderData, schema, basePrice);
+
+      // Create an order for the generation request
+      const order = await storage.createOrder({
+        userId,
+        productId,
+        quantity: 1,
+        totalAmount: totalPrice,
+        status: "processing",
+        orderData: {
+          generatorType: product.title,
+          formBuilderData,
+          fileReady: false
+        }
+      });
+
+      // Trigger webhook to external service
+      await handleGeneratorWebhook(
+        { body: { orderId: order.id, userId, productId } } as any,
+        res
+      );
+
+      console.log(`Form builder generation request created: ${order.id}`);
+
+    } catch (error) {
+      console.error("Form builder generation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to submit generation request" 
+      });
+    }
+  });
+
+  // Form Builder Generator Callback Endpoint
+  app.post("/api/webhook/generator-complete", handleGeneratorCallback);
+
+  // Validate Form Builder Data Endpoint
+  app.post("/api/validate-formbuilder", async (req, res) => {
+    try {
+      const { productId, formData } = req.body;
+
+      if (!productId || !formData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing productId or formData" 
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product || !product.formBuilderJson) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Product not found or has no form configuration" 
+        });
+      }
+
+      const validation = validateFormData(formData, product.formBuilderJson as any);
+      
+      res.json({
+        success: validation.valid,
+        errors: validation.errors
+      });
+
+    } catch (error) {
+      console.error("Form validation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to validate form data" 
+      });
+    }
+  });
+
+  // Calculate Dynamic Price Endpoint
+  app.post("/api/calculate-price", async (req, res) => {
+    try {
+      const { productId, formData } = req.body;
+
+      if (!productId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing productId" 
+        });
+      }
+
+      const product = await storage.getProduct(productId);
+      if (!product) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "Product not found" 
+        });
+      }
+
+      const basePrice = parseFloat(product.price.toString());
+      
+      if (product.formBuilderJson && formData) {
+        const totalPrice = calculateDynamicPrice(formData, product.formBuilderJson as any, basePrice);
+        res.json({
+          success: true,
+          basePrice,
+          totalPrice,
+          additionalPrice: totalPrice - basePrice
+        });
+      } else {
+        res.json({
+          success: true,
+          basePrice,
+          totalPrice: basePrice,
+          additionalPrice: 0
+        });
+      }
+
+    } catch (error) {
+      console.error("Price calculation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to calculate price" 
+      });
+    }
+  });
+
+  });
+
+  // MediaMarkt Generator API
+  app.post("/api/generate-mediamarkt", async (req, res) => {
+    try {
+      const { formData, userId } = req.body;
+
+      // Create an order for the generation request
+      const order = await storage.createOrder({
+        userId,
+        productId: "prod-6", // MediaMarkt product
+        quantity: 1,
+        totalAmount: 12.99,
+        status: "processing",
+        orderData: {
+          generatorType: "mediamarkt-rechnung",
+          formData,
+          fileReady: false
+        }
+      });
+
+      // In a real implementation, this would trigger a webhook to external service
+      // For now, we'll simulate the process
+      console.log(`MediaMarkt generation request created: ${order.id}`);
+      
+      // Simulate webhook call to external Windows server
+      const webhookPayload = {
+        orderId: order.id,
+        userId,
+        productSlug: "mediamarkt-rechnung",
+        formData,
+        callbackUrl: `${req.protocol}://${req.get('host')}/api/webhook/mediamarkt-complete`
+      };
+      
+      console.log("Webhook payload (would be sent to external server):", webhookPayload);
+
+      res.json({ 
+        success: true, 
+        orderId: order.id,
+        message: "Generation request submitted successfully"
+      });
+    } catch (error) {
+      console.error("MediaMarkt generation error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to submit generation request" 
+      });
+    }
+  });
+
+  // Webhook endpoint for external service to upload completed files
+  app.post("/api/webhook/mediamarkt-complete", async (req, res) => {
+    try {
+      const { orderId, userId, filename, fileBuffer } = req.body;
+
+      if (!orderId || !userId || !fileBuffer) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Verify the order exists and belongs to the user
+      const order = await storage.getOrder(orderId);
+      if (!order || order.userId !== userId || order.productId !== "prod-6") {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Update order with file ready status
+      await storage.updateOrder(orderId, {
+        status: "delivered",
+        deliveredAt: new Date(),
+        orderData: {
+          ...(order.orderData || {}),
+          fileReady: true,
+          filename: `mediamarkt-rechnung_${userId}_${orderId}.png`
+        }
+      });
+
+      console.log(`MediaMarkt invoice generated: mediamarkt-rechnung_${userId}_${orderId}.png`);
+
+      res.json({ success: true, message: "File processed successfully" });
+    } catch (error) {
+      console.error("Webhook error:", error);
+      res.status(500).json({ error: "Failed to process webhook" });
+    }
+  });
+
+  // File download endpoint with access control (simple mock for development)
+  app.get("/api/download/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      
+      // Parse filename to extract user ID for verification
+      const parts = filename.split('_');
+      if (parts.length < 3) {
+        return res.status(400).json({ error: "Invalid filename format" });
+      }
+
+      // For development, we'll just return a success response
+      // In production, this would stream the actual file from object storage
+      res.json({ 
+        message: "File download would start here", 
+        filename,
+        note: "This is a development endpoint. In production, the actual PNG file would be downloaded."
+      });
+      
+    } catch (error) {
+      console.error("Download error:", error);
+      res.status(500).json({ error: "Failed to download file" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications/user/:userId", async (req, res) => {
+    try {
+      const notifications = await storage.getNotificationsByUserId(req.params.userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/notifications/user/:userId/unread-count", async (req, res) => {
+    try {
+      const count = await storage.getUnreadNotificationCount(req.params.userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Get unread count error:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const notification = await storage.markNotificationAsRead(req.params.id);
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      res.json(notification);
+    } catch (error) {
+      console.error("Mark notification read error:", error);
+      res.status(400).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.patch("/api/notifications/user/:userId/read-all", async (req, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.params.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Mark all notifications read error:", error);
+      res.status(400).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}

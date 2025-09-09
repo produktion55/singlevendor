@@ -41,7 +41,7 @@ export default function TestFormBuilder() {
           <div className="border-t pt-4 space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium">Additional Options Price:</span>
-              <span className="text-lg font-bold">${additionalPrice.toFixed(2)}</span>
+              <span className="text-lg font-bold">{additionalPrice.toFixed(2)}€</span>
             </div>
             
             <Button 

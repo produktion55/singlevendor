@@ -66,12 +66,7 @@ export default function FormRenderer({
             if (selectedIndex >= 0 && field.optionPrices[selectedIndex] !== undefined) {
               const optionPrice = field.optionPrices[selectedIndex];
               if (optionPrice && optionPrice !== 0) {
-                if (field.optionPriceType === 'percentage') {
-                  // For percentage, we'd need a base price - for now treat as fixed
-                  price += optionPrice;
-                } else {
-                  price += optionPrice;
-                }
+                price += optionPrice;
               }
             }
           }
@@ -283,7 +278,7 @@ export default function FormRenderer({
         <div className="mt-6 p-4 bg-muted rounded-lg">
           <div className="flex justify-between items-center">
             <span className="font-medium">Additional Options Price:</span>
-            <span className="text-lg font-bold">+${totalPrice.toFixed(2)}</span>
+            <span className="text-lg font-bold">+{totalPrice.toFixed(2)}€</span>
           </div>
         </div>
       )}

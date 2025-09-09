@@ -149,7 +149,6 @@ export const selectFieldSchema = baseFieldSchema.extend({
   type: z.literal('select'),
   options: z.array(z.string()),
   optionPrices: z.array(z.number()).optional(),
-  optionPriceType: z.enum(['fixed', 'percentage']).optional(),
   multiple: z.boolean().optional()
 });
 
@@ -294,7 +293,6 @@ export type {
   NumberField,
   DateField,
   SelectField,
-  OptionPriceType,
   FormPricingCalculation,
   FormValidationResult
 } from './types/formBuilder';

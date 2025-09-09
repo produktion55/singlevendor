@@ -268,12 +268,8 @@ export function calculateDynamicPrice(
         
         if (optionIndex !== -1 && field.optionPrices[optionIndex]) {
           const priceModifier = field.optionPrices[optionIndex];
-          
-          if (field.optionPriceType === 'percentage') {
-            additionalPrice += basePrice * (priceModifier / 100);
-          } else {
-            additionalPrice += priceModifier;
-          }
+          // Only fixed-sum pricing is supported. Percentage is ignored.
+          additionalPrice += priceModifier;
         }
       }
     }

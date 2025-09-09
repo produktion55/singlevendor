@@ -9,19 +9,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { type Product } from "@shared/schema";
+import { useI18n } from "@/i18n";
 
 export function ProductListing() {
+  const { t } = useI18n();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const { addItem } = useCart();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
   const filterOptions = ["free", "paid", "germany", "europe", "printable", "photorealistic"];
+
+  const getQuery = () => {
+    const idx = location.indexOf("?");
+    const params = new URLSearchParams(idx >= 0 ? location.slice(idx) : "");
+    return (
+      params.get("q") || params.get("query") || params.get("search") || ""
+    ).toLowerCase();
+  };
+
+  const query = getQuery();
+
+  const normalized = (v: any) => (v === null || v === undefined ? "" : String(v).toLowerCase());
+  const matchesQuery = (p: Product, q: string) => {
+    if (!q) return true;
+    const hay = [
+      p.title,
+      p.description,
+      p.category,
+      (p as any).subcategory,
+      p.type,
+      p.id,
+      p.price,
+      ...(p.tags || [])
+    ]
+      .map(normalized)
+      .join("\n");
+    return hay.includes(q);
+  };
 
   const filteredProducts = products.filter(product => {
     if (selectedCategory !== "all" && product.category !== selectedCategory) {
@@ -34,6 +64,8 @@ export function ProductListing() {
       );
       if (!hasMatchingTag) return false;
     }
+    
+    if (!matchesQuery(product, query)) return false;
     
     return true;
   });
@@ -101,28 +133,28 @@ export function ProductListing() {
     <div className="max-w-full mx-auto px-3 md:px-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Digital Marketplace
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+          {t("digitalMarketplace")}
         </h1>
-        <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
-          Browse and purchase premium digital products, software licenses, and exclusive content.
+        <p className="text-base md:text-lg text-muted-foreground">
+          {t("digitalMarketplaceSubtitle")}
         </p>
       </div>
 
       {/* Filters Bar */}
-      <Card className="mb-8">
+      <Card className="mb-8 bg-card text-foreground">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category:</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("category")}</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="shop">Shop</SelectItem>
-                  <SelectItem value="generator">Generators</SelectItem>
+                  <SelectItem value="all">{t("allCategories")}</SelectItem>
+                  <SelectItem value="shop">{t("shop")}</SelectItem>
+                  <SelectItem value="generator">{t("generators")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -143,7 +175,7 @@ export function ProductListing() {
 
             <Button variant="outline" size="sm" className="ml-auto">
               <Filter className="w-4 h-4 mr-2" />
-              More Filters
+              {t("moreFilters")}
             </Button>
           </div>
         </CardContent>
@@ -181,7 +213,7 @@ export function ProductListing() {
               )}
 
               <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-bold text-gray-900 dark:text-white">
+                <span className="text-lg font-bold text-foreground">
                   {product.price}€
                 </span>
                 <div className="flex items-center space-x-2">
@@ -197,14 +229,14 @@ export function ProductListing() {
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={() => handleBuyNow(product)}
                   >
-                    Buy Now
+                    {t("buyNow")}
                   </Button>
                 </div>
               </div>
 
               {product.stock !== null && (
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Stock: {product.stock} available
+                  {t("stockAvailable", { count: product.stock })}
                 </div>
               )}
             </CardContent>
@@ -215,7 +247,7 @@ export function ProductListing() {
       {filteredProducts.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400">
-            No products found matching your criteria.
+            {t("noProductsFound")}
           </p>
         </div>
       )}

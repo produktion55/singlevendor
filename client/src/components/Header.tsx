@@ -15,6 +15,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useNotifications } from "@/hooks/useNotifications";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useI18n } from "@/i18n";
 
 interface HeaderProps {
   sidebarWidth: number;
@@ -25,7 +27,8 @@ export function Header({ sidebarWidth }: HeaderProps) {
   const { itemCount, setIsOpen } = useCart();
   const { notifications, unreadCount, markAsRead, formatNotificationTime } = useNotifications();
   const [searchQuery, setSearchQuery] = useState("");
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { t } = useI18n();
 
   const handleCartClick = () => {
     setIsOpen(true);
@@ -39,20 +42,41 @@ export function Header({ sidebarWidth }: HeaderProps) {
     return username.slice(0, 2).toUpperCase();
   };
 
+  // Sync search input with URL query param (q|query|search)
+  useEffect(() => {
+    const q = (() => {
+      const idx = location.indexOf("?");
+      const params = new URLSearchParams(idx >= 0 ? location.slice(idx) : "");
+      return params.get("q") || params.get("query") || params.get("search") || "";
+    })();
+    setSearchQuery(q);
+  }, [location]);
+
+  const goSearch = () => {
+    const q = searchQuery.trim();
+    if (q.length === 0) return;
+    setLocation(`/shop?q=${encodeURIComponent(q)}`);
+  };
+
   return (
     <header 
-      className="bg-white border-b border-gray-200 px-3 md:px-6 py-3 md:py-4 transition-all duration-300"
+      className="bg-card border-b border-border text-foreground px-3 md:px-6 py-3 md:py-4 transition-all duration-300"
     >
       <div className="flex items-center justify-between">
         {/* Search Bar */}
         <div className="flex-1 max-w-xs md:max-w-md md:ml-0 ml-10">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               type="text"
-              placeholder="Search products..."
+              placeholder={t("searchProducts")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  goSearch();
+                }
+              }}
               className="pl-10"
             />
           </div>
@@ -69,7 +93,7 @@ export function Header({ sidebarWidth }: HeaderProps) {
           >
             <ShoppingCart className="w-5 h-5" />
             {itemCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs bg-red-500">
+              <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground">
                 {itemCount}
               </Badge>
             )}
@@ -81,7 +105,7 @@ export function Header({ sidebarWidth }: HeaderProps) {
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs bg-yellow-500">
+                  <Badge className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground">
                     {unreadCount}
                   </Badge>
                 )}
@@ -89,14 +113,14 @@ export function Header({ sidebarWidth }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               {notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  No notifications yet
+                <div className="p-4 text-center text-muted-foreground">
+                  {t("noNotifications")}
                 </div>
               ) : (
                 notifications.slice(0, 5).map((notification) => (
                   <DropdownMenuItem 
                     key={notification.id} 
-                    className={`p-3 cursor-pointer hover:bg-gray-50 ${!notification.isRead ? 'bg-blue-50' : ''}`}
+                    className={`p-3 cursor-pointer hover:bg-accent ${!notification.isRead ? 'bg-accent' : ''}`}
                     onClick={() => {
                       // Mark as read when clicked
                       if (!notification.isRead) {
@@ -113,18 +137,18 @@ export function Header({ sidebarWidth }: HeaderProps) {
                   >
                     <div className="flex items-start justify-between w-full">
                       <div className="flex-1">
-                        <div className={`font-medium ${!notification.isRead ? 'text-blue-900' : ''}`}>
+                        <div className={`font-medium ${!notification.isRead ? 'text-foreground' : ''}`}>
                           {notification.title}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className="text-sm text-muted-foreground mt-1">
                           {notification.message}
                         </div>
-                        <div className="text-xs text-gray-400 mt-2">
+                        <div className="text-xs text-muted-foreground mt-2">
                           {formatNotificationTime(notification.createdAt)}
                         </div>
                       </div>
                       {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full ml-2 mt-1 flex-shrink-0"></div>
+                        <div className="w-2 h-2 bg-primary rounded-full ml-2 mt-1 flex-shrink-0"></div>
                       )}
                     </div>
                   </DropdownMenuItem>
@@ -135,7 +159,7 @@ export function Header({ sidebarWidth }: HeaderProps) {
                   className="p-3 text-center border-t"
                   onClick={() => setLocation("/notifications")}
                 >
-                  View all notifications
+                  {t("viewAllNotifications")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -146,9 +170,9 @@ export function Header({ sidebarWidth }: HeaderProps) {
             <Button
               variant="ghost"
               onClick={handleWalletClick}
-              className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg px-3 py-2 h-auto"
+              className="flex items-center space-x-2 bg-muted hover:bg-accent rounded-lg px-3 py-2 h-auto"
             >
-              <Wallet className="w-4 h-4 text-blue-600" />
+              <Wallet className="w-4 h-4 text-primary" />
               <span className="font-inter text-sm font-medium">€{user.balance}</span>
             </Button>
           )}
@@ -168,20 +192,17 @@ export function Header({ sidebarWidth }: HeaderProps) {
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem onClick={() => setLocation("/profile?tab=orders")}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t("profile")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
-                  <span>Sign out</span>
+                  <span>{t("signOut")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <Button variant="outline" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Login
-            </Button>
-          )}
+          ) : null}
+
+          <LanguageToggle />
         </div>
       </div>
     </header>
