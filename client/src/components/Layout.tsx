@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -13,11 +13,24 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("ui.sidebarExpanded");
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const sidebarWidth = sidebarExpanded ? 256 : 64; // 16rem : 4rem in pixels
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ui.sidebarExpanded", JSON.stringify(sidebarExpanded));
+    } catch {}
+  }, [sidebarExpanded]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

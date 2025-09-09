@@ -1,10 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "./ThemeProvider";
+import { useI18n } from "@/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function Footer() {
   const { theme, setTheme } = useTheme();
+  const { t } = useI18n();
 
   const themeOptions = [
     { value: "light", label: "Light", color: "bg-white border-2 border-gray-300" },
@@ -22,7 +24,7 @@ export function Footer() {
             <div>
               <h3 className="text-lg font-bold text-foreground">SecureMarket</h3>
               <p className="text-sm text-muted-foreground">
-                Premium digital products and services marketplace
+                {t("marketSubtitle")}
               </p>
             </div>
             <div className="space-y-2">
@@ -30,13 +32,13 @@ export function Footer() {
                 href="#contact" 
                 className="block text-sm text-muted-foreground hover:text-primary"
               >
-                Contact
+                {t("contact")}
               </a>
               <a 
                 href="#faq" 
                 className="block text-sm text-muted-foreground hover:text-primary"
               >
-                FAQ
+                {t("faq")}
               </a>
             </div>
           </div>
@@ -52,13 +54,13 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             {/* Language Toggle */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Language:</span>
+              <span className="text-sm text-muted-foreground">{t("language")}</span>
               <LanguageToggle />
             </div>
 
             {/* Theme Toggle */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">Theme:</span>
+              <span className="text-sm text-muted-foreground">{t("theme")}</span>
               <div className="flex space-x-1">
                 {themeOptions.map((option) => (
                   <Button

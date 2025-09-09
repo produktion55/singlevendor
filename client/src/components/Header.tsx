@@ -27,7 +27,7 @@ export function Header({ sidebarWidth }: HeaderProps) {
   const { itemCount, setIsOpen } = useCart();
   const { notifications, unreadCount, markAsRead, formatNotificationTime } = useNotifications();
   const [searchQuery, setSearchQuery] = useState("");
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { t } = useI18n();
 
   const handleCartClick = () => {
@@ -40,6 +40,22 @@ export function Header({ sidebarWidth }: HeaderProps) {
 
   const getInitials = (username: string) => {
     return username.slice(0, 2).toUpperCase();
+  };
+
+  // Sync search input with URL query param (q|query|search)
+  useEffect(() => {
+    const q = (() => {
+      const idx = location.indexOf("?");
+      const params = new URLSearchParams(idx >= 0 ? location.slice(idx) : "");
+      return params.get("q") || params.get("query") || params.get("search") || "";
+    })();
+    setSearchQuery(q);
+  }, [location]);
+
+  const goSearch = () => {
+    const q = searchQuery.trim();
+    if (q.length === 0) return;
+    setLocation(`/shop?q=${encodeURIComponent(q)}`);
   };
 
   return (
@@ -56,6 +72,11 @@ export function Header({ sidebarWidth }: HeaderProps) {
               placeholder={t("searchProducts")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  goSearch();
+                }
+              }}
               className="pl-10"
             />
           </div>
@@ -171,11 +192,11 @@ export function Header({ sidebarWidth }: HeaderProps) {
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem onClick={() => setLocation("/profile?tab=orders")}>
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>{t("profile")}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
-                  <span>Sign out</span>
+                  <span>{t("signOut")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

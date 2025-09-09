@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -27,46 +29,51 @@ interface SidebarProps {
 export function Sidebar({ isExpanded, onToggle, isMobile = false }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { t } = useI18n();
 
   const navigationItems = [
     {
-      category: "Generator",
+      id: "generator",
+      category: t("sidebarGenerator"),
       icon: Settings,
       items: [
-        { name: "All Generators", path: "/generators" },
-        { name: "Invoices", path: "/generators/invoices" },
-        { name: "Kontoauszug", path: "/generators/statements" },
-        { name: "Karten", path: "/generators/cards" },
-        { name: "ID & PP", path: "/generators/id" },
-        { name: "Misc", path: "/generators/misc" },
+        { name: t("navAllGenerators"), path: "/generators" },
+        { name: t("navInvoices"), path: "/generators/invoices" },
+        { name: t("navStatements"), path: "/generators/statements" },
+        { name: t("navCards"), path: "/generators/cards" },
+        { name: t("navIdPP"), path: "/generators/id" },
+        { name: t("navMisc"), path: "/generators/misc" },
       ],
     },
     {
-      category: "Tools",
+      id: "tools",
+      category: t("sidebarTools"),
       icon: QrCode,
       items: [
-        { name: "Crypto QR Code", path: "/tools/crypto-qr" },
-        { name: "IBAN Generator", path: "/tools/iban" },
-        { name: "TOTP Authenticator", path: "/tools/totp" },
-        { name: "Name & Address", path: "/tools/name-address" },
+        { name: t("navCryptoQR"), path: "/tools/crypto-qr" },
+        { name: t("navIbanGenerator"), path: "/tools/iban" },
+        { name: t("navTotp"), path: "/tools/totp" },
+        { name: t("navNameAddress"), path: "/tools/name-address" },
       ],
     },
     {
-      category: "Shop",
+      id: "shop",
+      category: t("sidebarShop"),
       icon: ShoppingBag,
       items: [
-        { name: "PSD", path: "/shop/psd" },
-        { name: "Tutorials", path: "/shop/tutorials" },
-        { name: "Real Docs", path: "/shop/real-docs" },
-        { name: "Leaks", path: "/shop/leaks" },
+        { name: t("navPsd"), path: "/shop/psd" },
+        { name: t("navTutorials"), path: "/shop/tutorials" },
+        { name: t("navRealDocs"), path: "/shop/real-docs" },
+        { name: t("navLeaks"), path: "/shop/leaks" },
       ],
     },
     {
-      category: "Account",
+      id: "account",
+      category: t("sidebarAccount"),
       icon: UserCheck,
       items: [
-        { name: "My Orders", path: "/orders" },
-        { name: "Messages", path: "/messages" },
+        { name: t("navMyOrders"), path: "/orders" },
+        { name: t("navMessages"), path: "/messages" },
       ],
     },
   ];
@@ -74,13 +81,14 @@ export function Sidebar({ isExpanded, onToggle, isMobile = false }: SidebarProps
   // Add admin section only for admin users
   if (user?.role === "admin") {
     navigationItems.push({
-      category: "Admin",
+      id: "admin",
+      category: t("sidebarAdmin"),
       icon: Shield,
       items: [
-        { name: "Sales", path: "/admin/sales" },
-        { name: "Manage Products", path: "/admin/products" },
-        { name: "Add Product", path: "/admin/add-product" },
-        { name: "Admin Settings", path: "/admin/settings" },
+        { name: t("navSales"), path: "/admin/sales" },
+        { name: t("navManageProducts"), path: "/admin/products" },
+        { name: t("navAddProduct"), path: "/admin/add-product" },
+        { name: t("navAdminSettings"), path: "/admin/settings" },
       ],
     });
   }
@@ -89,8 +97,8 @@ export function Sidebar({ isExpanded, onToggle, isMobile = false }: SidebarProps
     <div
       className={cn(
         isMobile 
-          ? "h-full bg-card text-foreground" 
-          : "fixed left-0 top-0 h-full bg-card text-foreground border-r border-border shadow-sm z-40 transition-all duration-300 hidden md:block",
+          ? "h-full bg-card text-foreground overflow-y-auto" 
+          : "fixed left-0 top-0 h-full bg-card text-foreground border-r border-border shadow-sm z-40 transition-all duration-300 hidden md:block overflow-y-auto",
         !isMobile && (isExpanded ? "w-64" : "w-16")
       )}
     >
@@ -107,37 +115,40 @@ export function Sidebar({ isExpanded, onToggle, isMobile = false }: SidebarProps
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="space-y-2">
-          {navigationItems.map((section) => (
-            <div key={section.category} className="space-y-1">
-              <div className="flex items-center space-x-3 p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg cursor-pointer">
-                <section.icon className="w-5 h-5" />
-                <span className={cn(
-                  "font-medium transition-opacity",
+        {/* Navigation with collapsible sections */}
+        <nav>
+          <Accordion type="multiple" defaultValue={navigationItems.map(n => n.id)} className="space-y-1">
+            {navigationItems.map((section) => (
+              <AccordionItem key={section.id} value={section.id} className="border-b-0">
+                <AccordionTrigger className="px-2 py-2">
+                  <div className="flex items-center space-x-3">
+                    <section.icon className="w-5 h-5" />
+                    <span className={cn(
+                      "font-medium transition-opacity",
+                      !isMobile && !isExpanded && "opacity-0"
+                    )}>
+                      {section.category}
+                    </span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className={cn(
+                  "ml-8 space-y-1",
                   !isMobile && !isExpanded && "opacity-0"
                 )}>
-                  {section.category}
-                </span>
-              </div>
-              
-              <div className={cn(
-                "ml-8 space-y-1 transition-opacity",
-                !isMobile && !isExpanded && "opacity-0"
-              )}>
-                {section.items.map((item) => (
-                  <Link key={item.path} href={item.path}>
-                    <div className={cn(
-                      "block p-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
-                      location === item.path && "bg-accent text-accent-foreground"
-                    )}>
-                      {item.name}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
+                  {section.items.map((item) => (
+                    <Link key={item.path} href={item.path}>
+                      <div className={cn(
+                        "block p-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-md transition-colors",
+                        location === item.path && "bg-accent text-accent-foreground"
+                      )}>
+                        {item.name}
+                      </div>
+                    </Link>
+                  ))}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </nav>
       </div>
     </div>

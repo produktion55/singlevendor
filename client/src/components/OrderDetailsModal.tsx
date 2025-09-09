@@ -69,7 +69,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Package className="w-5 h-5" />
-            <span>Order Details</span>
+            <span>{t("orderDetails")}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -77,14 +77,14 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
           {/* Order Status */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Status:</span>
+              <span className="text-sm text-gray-600">{t("status")}</span>
               <Badge className={`${getStatusColor(order.status || 'processing')} flex items-center space-x-1`}>
                 {getStatusIcon(order.status || 'processing')}
                 <span className="capitalize">{order.status || 'processing'}</span>
               </Badge>
             </div>
             <div className="text-sm text-gray-500">
-              Order #{order.id}
+              {t("orderNumber", { id: order.id })}
             </div>
           </div>
 
@@ -125,7 +125,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
             <div className="space-y-2">
               <div className="flex items-center space-x-2 text-sm">
                 <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Order Date:</span>
+                <span className="text-gray-600">{t("orderDate")}</span>
               </div>
               <p className="text-sm font-medium">{formatDate(order.createdAt)}</p>
             </div>
@@ -168,7 +168,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
               <div className="space-y-4">
                 <h3 className="font-semibold flex items-center space-x-2">
                   <FileText className="w-4 h-4" />
-                  <span>Generator Configuration</span>
+                  <span>{t("generatorConfiguration")}</span>
                 </h3>
                 
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -194,13 +194,13 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
               <div className="space-y-4">
                 <h3 className="font-semibold flex items-center space-x-2">
                   <Download className="w-4 h-4" />
-                  <span>Digital Content</span>
+                  <span>{t("digitalContent")}</span>
                 </h3>
                 
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 space-y-3">
                   {(order.orderData as any)?.licenseKey && (
                     <div>
-                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">License Key:</label>
+                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">{t("licenseKey")}</label>
                       <div className="flex items-center space-x-2 mt-1">
                         <code className="flex-1 bg-white dark:bg-gray-800 px-3 py-2 rounded border text-sm">
                           {(order.orderData as any).licenseKey}
@@ -214,11 +214,11 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
                   
                   {(order.orderData as any)?.digitalFile && (
                     <div>
-                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">Download:</label>
+                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">{t("download")}</label>
                       <div className="mt-1">
                         <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                           <Download className="w-4 h-4 mr-2" />
-                          Download File
+                          {t("downloadFile")}
                         </Button>
                       </div>
                     </div>
@@ -226,7 +226,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
                   
                   {(order.orderData as any)?.textLines && (
                     <div>
-                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">Generated Content:</label>
+                      <label className="text-sm font-medium text-blue-800 dark:text-blue-200">{t("generatedContent")}</label>
                       <div className="mt-1">
                         <div className="bg-white dark:bg-gray-800 p-3 rounded border text-sm whitespace-pre-wrap">
                           {(order.orderData as any).textLines}
@@ -247,7 +247,7 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
               {order.status === "delivered" && (
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Download className="w-4 h-4 mr-2" />
-                  Download
+                  {t("download")}
                 </Button>
               )}
             </div>
@@ -255,14 +255,14 @@ export function OrderDetailsModal({ order, product, isOpen, onClose, onSupportCl
             <div className="space-x-2">
               <Button variant="outline" onClick={() => onSupportClick?.(order.id)}>
                 <User className="w-4 h-4 mr-2" />
-                Contact Support
+                {t("contactSupport")}
               </Button>
               
               {order.status !== "delivered" && order.status !== "refunded" && (
                 <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" 
                   onClick={() => onRefundClick?.(order.id)}>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Request Refund
+                  {t("requestRefund")}
                 </Button>
               )}
             </div>

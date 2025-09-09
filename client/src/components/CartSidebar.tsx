@@ -128,7 +128,7 @@ export function CartSidebar() {
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-foreground">{(item.price * item.quantity).toFixed(2)}€</div>
-                        <div className="text-xs text-muted-foreground">{item.price}€ each</div>
+                        <div className="text-xs text-muted-foreground">{item.price}€ {t("each")}</div>
                       </div>
                       <Button
                         variant="ghost"
